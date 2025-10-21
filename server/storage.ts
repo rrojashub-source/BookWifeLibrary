@@ -1,0 +1,107 @@
+// Reference: javascript_database blueprint (modified for books)
+import { books, type Book, type InsertBook } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte, sql } from "drizzle-orm";
+
+export interface IStorage {
+  // Book CRUD operations
+  getAllBooks(): Promise<Book[]>;
+  getBook(id: string): Promise<Book | undefined>;
+  createBook(book: InsertBook): Promise<Book>;
+  updateBook(id: string, book: InsertBook): Promise<Book | undefined>;
+  deleteBook(id: string): Promise<boolean>;
+  
+  // Statistics
+  getMonthlyStats(year: number): Promise<any[]>;
+  getYearlyStats(year: number): Promise<any>;
+}
+
+export class DatabaseStorage implements IStorage {
+  async getAllBooks(): Promise<Book[]> {
+    return await db.select().from(books).orderBy(books.dateAdded);
+  }
+
+  async getBook(id: string): Promise<Book | undefined> {
+    const [book] = await db.select().from(books).where(eq(books.id, id));
+    return book || undefined;
+  }
+
+  async createBook(insertBook: InsertBook): Promise<Book> {
+    const [book] = await db
+      .insert(books)
+      .values(insertBook)
+      .returning();
+    return book;
+  }
+
+  async updateBook(id: string, insertBook: InsertBook): Promise<Book | undefined> {
+    const [book] = await db
+      .update(books)
+      .set(insertBook)
+      .where(eq(books.id, id))
+      .returning();
+    return book || undefined;
+  }
+
+  async deleteBook(id: string): Promise<boolean> {
+    const result = await db.delete(books).where(eq(books.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async getMonthlyStats(year: number): Promise<any[]> {
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    // Get books finished in the year
+    const finishedBooks = await db
+      .select()
+      .from(books)
+      .where(
+        and(
+          eq(books.status, "terminado"),
+          gte(books.finishDate, startDate),
+          lte(books.finishDate, endDate)
+        )
+      );
+
+    // Group by month
+    const monthlyData: Record<string, { booksRead: number; pagesRead: number }> = {};
+    
+    // Initialize all months
+    for (let month = 1; month <= 12; month++) {
+      const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
+      monthlyData[monthKey] = { booksRead: 0, pagesRead: 0 };
+    }
+
+    // Aggregate data
+    finishedBooks.forEach((book) => {
+      if (book.finishDate) {
+        const monthKey = book.finishDate.substring(0, 7); // YYYY-MM
+        if (monthlyData[monthKey]) {
+          monthlyData[monthKey].booksRead += 1;
+          monthlyData[monthKey].pagesRead += book.pages || 0;
+        }
+      }
+    });
+
+    // Convert to array
+    return Object.entries(monthlyData).map(([month, stats]) => ({
+      month,
+      booksRead: stats.booksRead,
+      pagesRead: stats.pagesRead,
+    }));
+  }
+
+  async getYearlyStats(year: number): Promise<any> {
+    const monthlyStats = await this.getMonthlyStats(year);
+    
+    return {
+      year,
+      booksRead: monthlyStats.reduce((sum, m) => sum + m.booksRead, 0),
+      pagesRead: monthlyStats.reduce((sum, m) => sum + m.pagesRead, 0),
+      monthlyBreakdown: monthlyStats,
+    };
+  }
+}
+
+export const storage = new DatabaseStorage();
