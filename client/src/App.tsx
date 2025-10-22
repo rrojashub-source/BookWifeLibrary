@@ -15,6 +15,7 @@ import Dashboard from "@/pages/dashboard";
 import DictionaryPage from "@/pages/dictionary-page";
 import WishlistPage from "@/pages/wishlist-page";
 import GoalsPage from "@/pages/goals-page";
+import AuthorsPage from "@/pages/authors-page";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 
@@ -47,13 +48,14 @@ function AppContent() {
               <LogoutButton />
             </div>
           </header>
-          <main className="flex-1 overflow-hidden flex flex-col">
+          <main className="flex-1 overflow-y-auto">
             <Switch>
               <ProtectedRoute path="/" component={Library} />
               <ProtectedRoute path="/wishlist" component={WishlistPage} />
               <ProtectedRoute path="/dashboard" component={Dashboard} />
               <ProtectedRoute path="/dictionary" component={DictionaryPage} />
               <ProtectedRoute path="/goals" component={GoalsPage} />
+              <ProtectedRoute path="/authors" component={AuthorsPage} />
               <Route component={NotFound} />
             </Switch>
           </main>

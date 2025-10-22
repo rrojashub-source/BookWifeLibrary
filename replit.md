@@ -57,6 +57,14 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 - **Indicador de completitud** cuando se alcanza o supera la meta
 - **Navegación directa** entre Dashboard y página de Metas
 
+### Autores Católicos
+- **Recursos curados** de autores espirituales destacados
+- **Enlaces externos** a Wikipedia, Vatican.va y sitios oficiales
+- **Organización por autores**: Santos y Doctores, místicos, autores modernos
+- **Descripción biográfica** y periodo histórico de cada autor
+- **Enlaces a obras completas** y recursos digitales
+- **12 autores destacados**: San Agustín, Santo Tomás, Santa Teresa de Ávila, San Juan de la Cruz, San Francisco de Sales, Santa Teresa de Lisieux, G.K. Chesterton, C.S. Lewis, Papa Francisco, Papa Benedicto XVI, San Juan Pablo II, Thomas Merton
+
 ## Arquitectura Técnica
 
 ### Frontend
@@ -162,6 +170,7 @@ Tabla `dictionary_entries`:
 - ✅ **Diccionario Personal** - Registro manual de palabras con definiciones personalizadas
 - ✅ **Lista de Deseos** - Gestión de wishlist con mover libros entre wishlist y biblioteca
 - ✅ **Metas de Lectura** - Sistema completo de metas anuales con seguimiento de progreso en dashboard
+- ✅ **Autores Católicos** - Página de recursos con 12 autores destacados y enlaces a obras completas
 - ✅ Diseño responsive
 - ✅ Modo oscuro/claro
 - ✅ Base de datos PostgreSQL
@@ -170,7 +179,6 @@ Tabla `dictionary_entries`:
 - 📚 Sistema de préstamos
 - 📊 Exportación en PDF/CSV
 - 🔄 Modo offline con sincronización
-- 📖 Enlaces a autores católicos destacados
 - 💡 Sistema de recomendaciones
 
 ## Cómo Usar
@@ -218,6 +226,16 @@ Tabla `dictionary_entries`:
 4. Edita o elimina metas existentes usando los botones en las tarjetas
 5. Navega al Dashboard para ver tu progreso visual hacia la meta del año actual
 6. La tarjeta de progreso muestra cuántos libros/páginas llevas y cuánto te falta
+
+### Explorar Autores Católicos
+1. Navega a "Autores" en el sidebar
+2. Explora las tarjetas con información de cada autor
+3. Lee la descripción biográfica y periodo histórico
+4. Click en los botones de enlaces externos para acceder a:
+   - Wikipedia (biografía completa)
+   - Vatican.va (documentos oficiales)
+   - Obras completas (textos digitales)
+5. Los enlaces se abren en una nueva pestaña para facilitar la navegación
 
 ## Comandos de Desarrollo
 

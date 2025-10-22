@@ -1,4 +1,4 @@
-import { BookOpen, LayoutDashboard, BookText, Heart, Target } from "lucide-react";
+import { BookOpen, LayoutDashboard, BookText, Heart, Target, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -43,6 +43,12 @@ const menuItems = [
     url: "/dictionary",
     icon: BookText,
     testId: "link-dictionary",
+  },
+  {
+    title: "Autores",
+    url: "/authors",
+    icon: Users,
+    testId: "link-authors",
   },
 ];
 
