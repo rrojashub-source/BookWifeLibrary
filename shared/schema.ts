@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, date, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, date, serial, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -92,7 +92,9 @@ export const readingGoals = pgTable("reading_goals", {
   target: integer("target").notNull(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  userYearUnique: unique("user_year_unique").on(table.userId, table.year),
+}));
 
 export const insertReadingGoalSchema = createInsertSchema(readingGoals, {
   year: z.number().int().min(2000).max(2100),

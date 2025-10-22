@@ -57,10 +57,7 @@ export default function GoalsPage() {
 
   const createGoalMutation = useMutation({
     mutationFn: async (data: Omit<InsertReadingGoal, "userId">) => {
-      return await apiRequest("/api/goals", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/goals", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
@@ -85,10 +82,7 @@ export default function GoalsPage() {
 
   const updateGoalMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Omit<InsertReadingGoal, "userId"> }) => {
-      return await apiRequest(`/api/goals/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("PATCH", `/api/goals/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
@@ -114,9 +108,7 @@ export default function GoalsPage() {
 
   const deleteGoalMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/goals/${id}`, {
-        method: "DELETE",
-      });
+      return await apiRequest("DELETE", `/api/goals/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
@@ -202,7 +194,10 @@ export default function GoalsPage() {
                           min={2000}
                           max={2100}
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === "" ? "" : parseInt(value));
+                          }}
                           data-testid="input-year"
                         />
                       </FormControl>
@@ -265,7 +260,10 @@ export default function GoalsPage() {
                           min={1}
                           placeholder="Ej: 12 libros o 5000 páginas"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === "" ? "" : parseInt(value));
+                          }}
                           data-testid="input-target"
                         />
                       </FormControl>
