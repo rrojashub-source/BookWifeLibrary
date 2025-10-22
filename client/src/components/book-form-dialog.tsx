@@ -28,9 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Loader2, Camera } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { BarcodeScanner } from "@/components/barcode-scanner";
 
 interface BookFormDialogProps {
   open: boolean;
@@ -49,7 +48,6 @@ export function BookFormDialog({
 }: BookFormDialogProps) {
   const { toast } = useToast();
   const [isSearching, setIsSearching] = useState(false);
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const form = useForm<InsertBook>({
     resolver: zodResolver(insertBookSchema),
@@ -76,13 +74,6 @@ export function BookFormDialog({
           isWishlist: 0,
         },
   });
-
-  const handleScanSuccess = (code: string) => {
-    // Set ISBN field with scanned code
-    form.setValue("isbn", code);
-    // Automatically search for book info
-    searchByISBN();
-  };
 
   const searchByISBN = async () => {
     const isbn = form.getValues("isbn");
@@ -176,15 +167,6 @@ export function BookFormDialog({
                           data-testid="input-isbn"
                         />
                       </FormControl>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setIsScannerOpen(true)}
-                        data-testid="button-scan-barcode"
-                      >
-                        <Camera className="h-4 w-4" />
-                        <span className="ml-2">Escanear</span>
-                      </Button>
                       <Button
                         type="button"
                         variant="secondary"
@@ -492,12 +474,6 @@ export function BookFormDialog({
             </div>
           </form>
         </Form>
-
-        <BarcodeScanner
-          open={isScannerOpen}
-          onOpenChange={setIsScannerOpen}
-          onScanSuccess={handleScanSuccess}
-        />
       </DialogContent>
     </Dialog>
   );
