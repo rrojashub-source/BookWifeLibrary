@@ -102,35 +102,34 @@ export function DictionaryFormDialog({
 
     setIsSearching(true);
     try {
+      // Call backend endpoint that uses Merriam-Webster API
       const response = await fetch(
-        `https://api.dictionaryapi.dev/api/v2/entries/es/${searchWord.trim()}`
+        `/api/dictionary/search/${encodeURIComponent(searchWord.trim())}`
       );
 
       if (!response.ok) {
-        throw new Error("Word not found");
+        if (response.status === 404) {
+          throw new Error("Word not found");
+        }
+        throw new Error("API error");
       }
 
       const data = await response.json();
-      const firstMeaning = data[0]?.meanings[0]?.definitions[0]?.definition;
 
-      if (firstMeaning) {
-        form.setValue("word", searchWord.trim());
-        form.setValue("definition", firstMeaning);
+      if (data.definition) {
+        form.setValue("word", data.word);
+        form.setValue("definition", data.definition);
         toast({
-          title: "Definición encontrada",
-          description: "La definición se agregó automáticamente",
+          title: "✅ Definición encontrada",
+          description: "La definición se cargó desde Merriam-Webster",
         });
       } else {
-        toast({
-          title: "No encontrada",
-          description: "No se encontró definición para esta palabra",
-          variant: "destructive",
-        });
+        throw new Error("No definition");
       }
     } catch (error) {
       toast({
         title: "Palabra no encontrada",
-        description: "La palabra no está en el diccionario automático. Agrega tu propia definición abajo. 📝",
+        description: "No se encontró en el diccionario. Agrega tu propia definición abajo. 📝",
       });
       form.setValue("word", searchWord.trim());
     } finally {
@@ -157,7 +156,7 @@ export function DictionaryFormDialog({
             <div className="space-y-1">
               <Label>Buscar Definición Automática (Opcional)</Label>
               <p className="text-xs text-muted-foreground">
-                El vocabulario es limitado. Si no encuentra tu palabra, agrégala manualmente abajo.
+                Diccionario Merriam-Webster Spanish-English. Incluye vocabulario religioso y general.
               </p>
             </div>
             <div className="flex gap-2">

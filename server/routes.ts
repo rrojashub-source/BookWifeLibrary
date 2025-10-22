@@ -120,6 +120,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dictionary endpoints
+  // Search word definition using Merriam-Webster API
+  app.get("/api/dictionary/search/:word", async (req, res) => {
+    try {
+      const word = req.params.word.toLowerCase().trim();
+      const apiKey = process.env.MERRIAM_WEBSTER_API_KEY;
+
+      if (!apiKey) {
+        return res.status(500).json({ error: "Dictionary API key not configured" });
+      }
+
+      const response = await fetch(
+        `https://www.dictionaryapi.com/api/v3/references/spanish/json/${encodeURIComponent(word)}?key=${apiKey}`
+      );
+
+      if (!response.ok) {
+        return res.status(404).json({ error: "Word not found" });
+      }
+
+      const data = await response.json();
+
+      // Check if we got valid results (not spelling suggestions)
+      if (!data || data.length === 0 || typeof data[0] === 'string') {
+        return res.status(404).json({ error: "Word not found", suggestions: typeof data[0] === 'string' ? data : [] });
+      }
+
+      // Extract the first definition
+      const entry = data[0];
+      const shortdef = entry.shortdef?.[0];
+      
+      if (!shortdef) {
+        return res.status(404).json({ error: "No definition available" });
+      }
+
+      res.json({
+        word: word,
+        definition: shortdef,
+        pronunciation: entry.hwi?.hw || word,
+        partOfSpeech: entry.fl || "",
+      });
+    } catch (error) {
+      console.error("Error searching dictionary:", error);
+      res.status(500).json({ error: "Failed to search dictionary" });
+    }
+  });
+
   // Get all dictionary entries
   app.get("/api/dictionary", async (req, res) => {
     try {

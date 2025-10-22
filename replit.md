@@ -30,7 +30,9 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 
 ### Diccionario Personal
 - **Registro de palabras** encontradas durante la lectura
-- **Búsqueda automática** de definiciones usando Spanish Dictionary API
+- **Búsqueda automática** de definiciones usando **Merriam-Webster Spanish-English API**
+- **Vocabulario amplio** incluyendo términos religiosos y católicos
+- **1000 búsquedas diarias gratuitas** con API oficial
 - **Asociación opcional** con libros de la biblioteca
 - **Notas personales** para contexto adicional
 - CRUD completo: crear, editar y eliminar entradas
