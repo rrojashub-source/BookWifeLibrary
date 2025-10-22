@@ -408,6 +408,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get recommendations based on reading habits
+  app.get("/api/recommendations", async (req, res) => {
+    try {
+      const libraryBooks = await storage.getLibraryBooks();
+      const wishlistBooks = await storage.getWishlistBooks();
+
+      // Filter only finished books with ratings
+      const finishedBooks = libraryBooks.filter(b => b.status === "terminado");
+      const ratedBooks = finishedBooks.filter(b => b.rating && b.rating >= 4);
+
+      // Analyze favorite genres
+      const genreCount: Record<string, { count: number; avgRating: number; totalRating: number }> = {};
+      finishedBooks.forEach(book => {
+        if (book.genre) {
+          if (!genreCount[book.genre]) {
+            genreCount[book.genre] = { count: 0, avgRating: 0, totalRating: 0 };
+          }
+          genreCount[book.genre].count++;
+          if (book.rating) {
+            genreCount[book.genre].totalRating += book.rating;
+          }
+        }
+      });
+
+      // Calculate average ratings for genres
+      Object.keys(genreCount).forEach(genre => {
+        const data = genreCount[genre];
+        data.avgRating = data.totalRating / data.count;
+      });
+
+      // Get top 3 favorite genres (by count and rating)
+      const topGenres = Object.entries(genreCount)
+        .sort((a, b) => {
+          // Sort by count first, then by average rating
+          if (b[1].count !== a[1].count) {
+            return b[1].count - a[1].count;
+          }
+          return b[1].avgRating - a[1].avgRating;
+        })
+        .slice(0, 3)
+        .map(([genre, data]) => ({
+          genre,
+          count: data.count,
+          avgRating: data.avgRating,
+        }));
+
+      // Analyze favorite authors
+      const authorStats: Record<string, { count: number; avgRating: number; totalRating: number; ratedCount: number }> = {};
+      finishedBooks.forEach(book => {
+        if (book.author) {
+          if (!authorStats[book.author]) {
+            authorStats[book.author] = { count: 0, avgRating: 0, totalRating: 0, ratedCount: 0 };
+          }
+          authorStats[book.author].count++;
+          if (book.rating) {
+            authorStats[book.author].totalRating += book.rating;
+            authorStats[book.author].ratedCount++;
+          }
+        }
+      });
+
+      // Calculate average ratings for authors
+      Object.keys(authorStats).forEach(author => {
+        const data = authorStats[author];
+        if (data.ratedCount > 0) {
+          data.avgRating = data.totalRating / data.ratedCount;
+        }
+      });
+
+      // Get top 5 favorite authors (must have at least 1 book with rating >= 4)
+      const topAuthors = Object.entries(authorStats)
+        .filter(([_, data]) => data.ratedCount > 0 && data.avgRating >= 4)
+        .sort((a, b) => {
+          // Sort by average rating first, then by count
+          if (Math.abs(b[1].avgRating - a[1].avgRating) > 0.5) {
+            return b[1].avgRating - a[1].avgRating;
+          }
+          return b[1].count - a[1].count;
+        })
+        .slice(0, 5)
+        .map(([author, data]) => ({
+          author,
+          count: data.count,
+          avgRating: data.avgRating,
+        }));
+
+      // Suggest books from wishlist based on preferences
+      const wishlistSuggestions = wishlistBooks.filter(book => {
+        const matchesGenre = book.genre && topGenres.some(g => g.genre === book.genre);
+        const matchesAuthor = book.author && topAuthors.some(a => a.author === book.author);
+        return matchesGenre || matchesAuthor;
+      });
+
+      // Get some random wishlist books if no matches
+      const otherWishlistBooks = wishlistBooks
+        .filter(book => !wishlistSuggestions.includes(book))
+        .slice(0, 3);
+
+      const recommendations = {
+        topGenres,
+        topAuthors,
+        wishlistSuggestions: wishlistSuggestions.slice(0, 6),
+        otherWishlistBooks,
+        hasFinishedBooks: finishedBooks.length > 0,
+        hasRatedBooks: ratedBooks.length > 0,
+        hasWishlist: wishlistBooks.length > 0,
+      };
+
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error generating recommendations:", error);
+      res.status(500).json({ error: "Failed to generate recommendations" });
+    }
+  });
+
   // Custom Authors endpoints
   // Get all custom authors for current user
   app.get("/api/custom-authors", async (req, res) => {
