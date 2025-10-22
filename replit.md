@@ -17,7 +17,7 @@ The application employs a modern full-stack architecture.
 - **Dark/Light Mode**: Full support for both themes.
 
 ### Technical Implementations
-- **Book Management**: Features a comprehensive catalog with card views, ISBN barcode scanning (using `@zxing/library` optimized for iOS Safari), automatic ISBN data fetching via Open Library API, manual entry, custom cover URLs, three reading states (To Read, Reading, Finished), 1-5 star rating system, and personal reviews.
+- **Book Management**: Features a comprehensive catalog with card views, manual ISBN entry with automatic data fetching via Open Library API, custom cover URLs, three reading states (To Read, Reading, Finished), 1-5 star rating system, and personal reviews.
 - **Statistics Dashboard**: Displays books and pages read monthly/annually, interactive charts (bar and line), monthly comparisons, real-time current month stats, and an annual goal progress card.
 - **Filters and Search**: Search by title/author, filter by reading status and genre.
 - **Personal Dictionary**: Manual entry for words, custom Spanish definitions, optional book association, and personal notes.
@@ -43,7 +43,6 @@ Comprehensive RESTful API for authentication, book management, wishlist operatio
 
 ## External Dependencies
 - **Open Library API**: Used for automatic book data retrieval via ISBN.
-- **@zxing/library**: JavaScript library for barcode scanning, specifically used for ISBN capture.
 - **PostgreSQL (Neon)**: The primary database for data persistence.
 - **Express.js**: Backend framework.
 - **React**: Frontend library.
