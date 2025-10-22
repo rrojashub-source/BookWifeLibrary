@@ -129,8 +129,8 @@ export function DictionaryFormDialog({
       }
     } catch (error) {
       toast({
-        title: "No encontrada",
-        description: "No se encontró definición. Puedes agregar una definición manual.",
+        title: "Palabra no encontrada",
+        description: "La palabra no está en el diccionario automático. Agrega tu propia definición abajo. 📝",
       });
       form.setValue("word", searchWord.trim());
     } finally {
@@ -154,10 +154,15 @@ export function DictionaryFormDialog({
 
         {!entry && (
           <div className="space-y-4 border-b pb-4">
-            <Label>Buscar Definición (Opcional)</Label>
+            <div className="space-y-1">
+              <Label>Buscar Definición Automática (Opcional)</Label>
+              <p className="text-xs text-muted-foreground">
+                El vocabulario es limitado. Si no encuentra tu palabra, agrégala manualmente abajo.
+              </p>
+            </div>
             <div className="flex gap-2">
               <Input
-                placeholder="Escribe una palabra..."
+                placeholder="Ej: casa, libro, paz..."
                 value={searchWord}
                 onChange={(e) => setSearchWord(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && searchDictionaryAPI()}
