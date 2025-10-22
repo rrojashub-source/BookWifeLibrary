@@ -2,7 +2,8 @@
 import { 
   books, type Book, type InsertBook, 
   users, type User, type InsertUser,
-  dictionaryEntries, type DictionaryEntry, type InsertDictionaryEntry 
+  dictionaryEntries, type DictionaryEntry, type InsertDictionaryEntry,
+  readingGoals, type ReadingGoal, type InsertReadingGoal
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
@@ -35,6 +36,14 @@ export interface IStorage {
   createDictionaryEntry(entry: InsertDictionaryEntry): Promise<DictionaryEntry>;
   updateDictionaryEntry(id: string, entry: InsertDictionaryEntry): Promise<DictionaryEntry | undefined>;
   deleteDictionaryEntry(id: string): Promise<boolean>;
+  
+  // Reading goals CRUD operations
+  getAllReadingGoals(userId: number): Promise<ReadingGoal[]>;
+  getReadingGoal(id: string): Promise<ReadingGoal | undefined>;
+  getReadingGoalByYear(userId: number, year: number): Promise<ReadingGoal | undefined>;
+  createReadingGoal(goal: InsertReadingGoal): Promise<ReadingGoal>;
+  updateReadingGoal(id: string, goal: InsertReadingGoal): Promise<ReadingGoal | undefined>;
+  deleteReadingGoal(id: string): Promise<boolean>;
   
   // Statistics
   getMonthlyStats(year: number): Promise<any[]>;
@@ -160,6 +169,50 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDictionaryEntry(id: string): Promise<boolean> {
     const result = await db.delete(dictionaryEntries).where(eq(dictionaryEntries.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Reading goals methods
+  async getAllReadingGoals(userId: number): Promise<ReadingGoal[]> {
+    return await db
+      .select()
+      .from(readingGoals)
+      .where(eq(readingGoals.userId, userId))
+      .orderBy(readingGoals.year);
+  }
+
+  async getReadingGoal(id: string): Promise<ReadingGoal | undefined> {
+    const [goal] = await db.select().from(readingGoals).where(eq(readingGoals.id, id));
+    return goal || undefined;
+  }
+
+  async getReadingGoalByYear(userId: number, year: number): Promise<ReadingGoal | undefined> {
+    const [goal] = await db
+      .select()
+      .from(readingGoals)
+      .where(and(eq(readingGoals.userId, userId), eq(readingGoals.year, year)));
+    return goal || undefined;
+  }
+
+  async createReadingGoal(insertGoal: InsertReadingGoal): Promise<ReadingGoal> {
+    const [goal] = await db
+      .insert(readingGoals)
+      .values(insertGoal)
+      .returning();
+    return goal;
+  }
+
+  async updateReadingGoal(id: string, insertGoal: InsertReadingGoal): Promise<ReadingGoal | undefined> {
+    const [goal] = await db
+      .update(readingGoals)
+      .set(insertGoal)
+      .where(eq(readingGoals.id, id))
+      .returning();
+    return goal || undefined;
+  }
+
+  async deleteReadingGoal(id: string): Promise<boolean> {
+    const result = await db.delete(readingGoals).where(eq(readingGoals.id, id));
     return result.rowCount !== null && result.rowCount > 0;
   }
 
