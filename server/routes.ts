@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBookSchema, insertDictionaryEntrySchema } from "@shared/schema";
+import { insertBookSchema, insertDictionaryEntrySchema, insertReadingGoalSchema } from "@shared/schema";
 import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -244,6 +244,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting dictionary entry:", error);
       res.status(500).json({ error: "Failed to delete dictionary entry" });
+    }
+  });
+
+  // Reading goals endpoints
+  // Get all reading goals for current user
+  app.get("/api/goals", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    try {
+      const goals = await storage.getAllReadingGoals(req.user.id);
+      res.json(goals);
+    } catch (error) {
+      console.error("Error fetching reading goals:", error);
+      res.status(500).json({ error: "Failed to fetch reading goals" });
+    }
+  });
+
+  // Get reading goal for specific year
+  app.get("/api/goals/year/:year", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    try {
+      const year = parseInt(req.params.year);
+      const goal = await storage.getReadingGoalByYear(req.user.id, year);
+      if (!goal) {
+        return res.status(404).json({ error: "No goal found for this year" });
+      }
+      res.json(goal);
+    } catch (error) {
+      console.error("Error fetching reading goal:", error);
+      res.status(500).json({ error: "Failed to fetch reading goal" });
+    }
+  });
+
+  // Create new reading goal
+  app.post("/api/goals", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    try {
+      const validatedData = insertReadingGoalSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+      });
+      
+      // Check if goal already exists for this year
+      const existingGoal = await storage.getReadingGoalByYear(req.user.id, validatedData.year);
+      if (existingGoal) {
+        return res.status(400).json({ error: "Ya existe una meta para este año" });
+      }
+      
+      const goal = await storage.createReadingGoal(validatedData);
+      res.status(201).json(goal);
+    } catch (error: any) {
+      console.error("Error creating reading goal:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid reading goal data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create reading goal" });
+    }
+  });
+
+  // Update reading goal
+  app.patch("/api/goals/:id", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    try {
+      const validatedData = insertReadingGoalSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+      });
+      const goal = await storage.updateReadingGoal(req.params.id, validatedData);
+      if (!goal) {
+        return res.status(404).json({ error: "Reading goal not found" });
+      }
+      res.json(goal);
+    } catch (error: any) {
+      console.error("Error updating reading goal:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid reading goal data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update reading goal" });
+    }
+  });
+
+  // Delete reading goal
+  app.delete("/api/goals/:id", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    try {
+      const success = await storage.deleteReadingGoal(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Reading goal not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting reading goal:", error);
+      res.status(500).json({ error: "Failed to delete reading goal" });
     }
   });
 
