@@ -1,6 +1,17 @@
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, BookOpen, Cross, Lightbulb } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ExternalLink, BookOpen, Cross, Lightbulb, Plus, Pencil, Trash2, UserPlus, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertCustomAuthorSchema, type CustomAuthor, type InsertCustomAuthor } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Author {
   name: string;
@@ -19,7 +30,7 @@ interface AuthorCategory {
   testId: string;
 }
 
-const categories: AuthorCategory[] = [
+const predefinedCategories: AuthorCategory[] = [
   {
     title: "Santos y Doctores de la Iglesia",
     description: "Grandes maestros de la fe reconocidos por su santidad y doctrina",
@@ -162,7 +173,268 @@ const categories: AuthorCategory[] = [
   },
 ];
 
+interface CustomAuthorFormProps {
+  author?: CustomAuthor;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+function CustomAuthorForm({ author, onSuccess, onCancel }: CustomAuthorFormProps) {
+  const { toast } = useToast();
+  const [links, setLinks] = useState<{ label: string; url: string }[]>(
+    author?.links ? JSON.parse(author.links) : [{ label: "", url: "" }]
+  );
+
+  const form = useForm<InsertCustomAuthor>({
+    resolver: zodResolver(insertCustomAuthorSchema.omit({ userId: true })),
+    defaultValues: {
+      name: author?.name || "",
+      description: author?.description || "",
+      period: author?.period || "",
+      links: author?.links || JSON.stringify([{ label: "", url: "" }]),
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: Omit<InsertCustomAuthor, "userId">) =>
+      apiRequest("POST", "/api/custom-authors", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-authors"] });
+      toast({
+        title: "Autor agregado",
+        description: "El autor ha sido agregado exitosamente.",
+      });
+      onSuccess();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo agregar el autor. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: Omit<InsertCustomAuthor, "userId">) =>
+      apiRequest("PATCH", `/api/custom-authors/${author?.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-authors"] });
+      toast({
+        title: "Autor actualizado",
+        description: "El autor ha sido actualizado exitosamente.",
+      });
+      onSuccess();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el autor. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  function onSubmit(values: Omit<InsertCustomAuthor, "userId">) {
+    const linksJson = JSON.stringify(links.filter(l => l.label && l.url));
+    const data = { ...values, links: linksJson };
+    
+    if (author) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
+  }
+
+  function addLink() {
+    setLinks([...links, { label: "", url: "" }]);
+  }
+
+  function removeLink(index: number) {
+    setLinks(links.filter((_, i) => i !== index));
+  }
+
+  function updateLink(index: number, field: "label" | "url", value: string) {
+    const newLinks = [...links];
+    newLinks[index][field] = value;
+    setLinks(newLinks);
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nombre del autor</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Ej: San Juan Bosco" 
+                  {...field} 
+                  data-testid="input-author-name"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descripción</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Breve biografía y obras principales..."
+                  className="min-h-[100px]"
+                  {...field}
+                  data-testid="input-author-description"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="period"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Periodo (opcional)</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Ej: 1815-1888" 
+                  {...field} 
+                  value={field.value || ""}
+                  data-testid="input-author-period"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <FormLabel>Enlaces y recursos</FormLabel>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addLink}
+              className="gap-1"
+              data-testid="button-add-link"
+            >
+              <Plus className="h-3 w-3" />
+              Agregar enlace
+            </Button>
+          </div>
+
+          {links.map((link, index) => (
+            <div key={index} className="flex gap-2 items-start">
+              <div className="flex-1 space-y-2">
+                <Input
+                  placeholder="Etiqueta (ej: Wikipedia)"
+                  value={link.label}
+                  onChange={(e) => updateLink(index, "label", e.target.value)}
+                  data-testid={`input-link-label-${index}`}
+                />
+                <Input
+                  placeholder="URL (ej: https://...)"
+                  value={link.url}
+                  onChange={(e) => updateLink(index, "url", e.target.value)}
+                  data-testid={`input-link-url-${index}`}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeLink(index)}
+                disabled={links.length === 1}
+                data-testid={`button-remove-link-${index}`}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            data-testid="button-cancel"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={createMutation.isPending || updateMutation.isPending}
+            data-testid="button-submit-author"
+          >
+            {author ? "Actualizar" : "Agregar"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+}
+
 export default function AuthorsPage() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingAuthor, setEditingAuthor] = useState<CustomAuthor | undefined>();
+  const { toast } = useToast();
+
+  const { data: customAuthors = [], isLoading } = useQuery<CustomAuthor[]>({
+    queryKey: ["/api/custom-authors"],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/custom-authors/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-authors"] });
+      toast({
+        title: "Autor eliminado",
+        description: "El autor ha sido eliminado exitosamente.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el autor. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  function handleEdit(author: CustomAuthor) {
+    setEditingAuthor(author);
+    setDialogOpen(true);
+  }
+
+  function handleDelete(id: string) {
+    if (confirm("¿Estás seguro de que deseas eliminar este autor?")) {
+      deleteMutation.mutate(id);
+    }
+  }
+
+  function handleAddNew() {
+    setEditingAuthor(undefined);
+    setDialogOpen(true);
+  }
+
+  function handleDialogClose() {
+    setDialogOpen(false);
+    setEditingAuthor(undefined);
+  }
+
   return (
     <div className="container mx-auto p-6 max-w-6xl">
       <div className="flex items-center justify-between mb-8">
@@ -178,7 +450,7 @@ export default function AuthorsPage() {
       </div>
 
       <div className="space-y-8">
-        {categories.map((category) => (
+        {predefinedCategories.map((category) => (
           <div key={category.testId} data-testid={category.testId}>
             <div className="mb-4">
               <h2 className="text-2xl font-bold text-foreground">{category.title}</h2>
@@ -240,6 +512,145 @@ export default function AuthorsPage() {
             </div>
           </div>
         ))}
+
+        {/* Custom Authors Section */}
+        <div data-testid="category-custom">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Mis Autores Favoritos</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Autores personalizados que has agregado
+              </p>
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  onClick={handleAddNew}
+                  className="gap-2"
+                  data-testid="button-add-author"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Agregar Autor
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingAuthor ? "Editar Autor" : "Agregar Nuevo Autor"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingAuthor
+                      ? "Actualiza la información del autor"
+                      : "Agrega un nuevo autor a tu lista personalizada"}
+                  </DialogDescription>
+                </DialogHeader>
+                <CustomAuthorForm
+                  author={editingAuthor}
+                  onSuccess={handleDialogClose}
+                  onCancel={handleDialogClose}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Cargando autores...
+            </div>
+          ) : customAuthors.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="py-8 text-center">
+                <UserPlus className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground mb-4">
+                  No has agregado autores personalizados aún
+                </p>
+                <Button onClick={handleAddNew} variant="outline" data-testid="button-add-first-author">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Agregar tu primer autor
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {customAuthors.map((author, index) => {
+                const links = JSON.parse(author.links) as { label: string; url: string }[];
+                return (
+                  <Card key={author.id} data-testid={`card-custom-author-${index}`} className="hover-elevate">
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <CardTitle className="flex items-center gap-2">
+                            <BookOpen className="h-5 w-5 text-primary" />
+                            {author.name}
+                          </CardTitle>
+                          {author.period && (
+                            <CardDescription className="mt-1 text-xs">
+                              {author.period}
+                            </CardDescription>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(author)}
+                            data-testid={`button-edit-author-${index}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => handleDelete(author.id)}
+                            data-testid={`button-delete-author-${index}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {author.description}
+                      </p>
+
+                      {links.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Enlaces y recursos:
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {links.map((link, linkIndex) => (
+                              <Button
+                                key={linkIndex}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs gap-1"
+                                asChild
+                              >
+                                <a
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  data-testid={`link-custom-${index}-${linkIndex}`}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  {link.label}
+                                </a>
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <Card className="mt-8 border-primary/20">
