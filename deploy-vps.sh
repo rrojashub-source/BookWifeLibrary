@@ -96,25 +96,44 @@ npm run build
 echo -e "${BLUE}🗄️ Paso 10: Sincronizando schema de base de datos...${NC}"
 npm run db:push
 
-echo -e "${BLUE}🔄 Paso 11: Instalando PM2...${NC}"
+echo -e "${BLUE}👤 Paso 11: Creando usuario inicial en la base de datos...${NC}"
+PGPASSWORD=$DB_PASSWORD psql -h localhost -U $DB_USER -d $DB_NAME -f init-database.sql
+echo -e "${GREEN}✅ Usuario 'moi' creado con contraseña correcta${NC}"
+
+echo -e "${BLUE}🔄 Paso 12: Instalando PM2 y tsx...${NC}"
 if ! command -v pm2 &> /dev/null; then
     sudo npm install -g pm2
 fi
+# Instalar tsx globalmente para PM2
+sudo npm install -g tsx
 
-echo -e "${BLUE}▶️ Paso 12: Iniciando aplicación con PM2...${NC}"
+echo -e "${BLUE}📁 Paso 13: Creando directorio de logs...${NC}"
+mkdir -p logs
+
+echo -e "${BLUE}▶️ Paso 14: Iniciando aplicación con PM2 (usando ecosystem.config.cjs)...${NC}"
 pm2 delete $APP_NAME 2>/dev/null || true
-pm2 start npm --name "$APP_NAME" -- start
+# Usar el archivo de configuración que maneja ES modules correctamente
+pm2 start ecosystem.config.cjs --env production
 pm2 save
-pm2 startup | tail -n 1 | bash
+pm2 startup | tail -n 1 | sudo bash
 
-echo -e "${BLUE}🌐 Paso 13: Instalando Nginx...${NC}"
+echo -e "${GREEN}✅ Aplicación iniciada con PM2${NC}"
+echo ""
+echo "📊 Verificando estado de la aplicación..."
+pm2 status
+echo ""
+sleep 3
+echo "📋 Logs recientes:"
+pm2 logs $APP_NAME --lines 20 --nostream
+
+echo -e "${BLUE}🌐 Paso 15: Instalando Nginx...${NC}"
 if ! command -v nginx &> /dev/null; then
     sudo apt install -y nginx
     sudo systemctl enable nginx
     sudo systemctl start nginx
 fi
 
-echo -e "${BLUE}⚙️ Paso 14: Configurando Nginx...${NC}"
+echo -e "${BLUE}⚙️ Paso 16: Configurando Nginx...${NC}"
 sudo tee /etc/nginx/sites-available/$APP_NAME > /dev/null <<EOF
 server {
     listen 80;
@@ -138,13 +157,13 @@ sudo ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 
-echo -e "${BLUE}🔥 Paso 15: Configurando firewall...${NC}"
+echo -e "${BLUE}🔥 Paso 17: Configurando firewall...${NC}"
 sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw --force enable
 
-echo -e "${BLUE}🔒 Paso 16: Instalando certificado SSL...${NC}"
+echo -e "${BLUE}🔒 Paso 18: Instalando certificado SSL...${NC}"
 sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --email tu-email@ejemplo.com
 
