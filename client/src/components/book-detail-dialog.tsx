@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, BookOpen, Calendar, Edit, Trash2 } from "lucide-react";
+import { Star, BookOpen, Calendar, Edit, Trash2, ShoppingBag } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -18,6 +18,10 @@ interface BookDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onMoveToLibrary?: () => void;
+  isDeleting?: boolean;
+  isMoving?: boolean;
+  showMoveToLibrary?: boolean;
 }
 
 const statusConfig = {
@@ -32,6 +36,10 @@ export function BookDetailDialog({
   onOpenChange,
   onEdit,
   onDelete,
+  onMoveToLibrary,
+  isDeleting = false,
+  isMoving = false,
+  showMoveToLibrary = false,
 }: BookDetailDialogProps) {
   if (!book) return null;
 
@@ -158,7 +166,18 @@ export function BookDetailDialog({
               </div>
             )}
 
-            <div className="flex gap-3 pt-4 border-t">
+            <div className="flex gap-3 pt-4 border-t flex-wrap">
+              {showMoveToLibrary && onMoveToLibrary && (
+                <Button
+                  className="flex-1 min-w-[200px]"
+                  onClick={onMoveToLibrary}
+                  disabled={isMoving}
+                  data-testid="button-move-to-library"
+                >
+                  <ShoppingBag className="h-4 w-4 mr-2" />
+                  {isMoving ? "Moviendo..." : "Mover a Biblioteca"}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="flex-1"
@@ -172,10 +191,11 @@ export function BookDetailDialog({
                 variant="destructive"
                 className="flex-1"
                 onClick={onDelete}
+                disabled={isDeleting}
                 data-testid="button-delete-book"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Eliminar
+                {isDeleting ? "Eliminando..." : "Eliminar"}
               </Button>
             </div>
           </div>

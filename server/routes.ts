@@ -8,14 +8,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication (creates /api/register, /api/login, /api/logout, /api/user)
   setupAuth(app);
 
-  // Get all books
+  // Get all books (library only - not wishlist)
   app.get("/api/books", async (req, res) => {
     try {
-      const books = await storage.getAllBooks();
+      const books = await storage.getLibraryBooks();
       res.json(books);
     } catch (error) {
       console.error("Error fetching books:", error);
       res.status(500).json({ error: "Failed to fetch books" });
+    }
+  });
+
+  // Get wishlist books
+  app.get("/api/wishlist", async (req, res) => {
+    try {
+      const books = await storage.getWishlistBooks();
+      res.json(books);
+    } catch (error) {
+      console.error("Error fetching wishlist:", error);
+      res.status(500).json({ error: "Failed to fetch wishlist" });
     }
   });
 
@@ -77,6 +88,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting book:", error);
       res.status(500).json({ error: "Failed to delete book" });
+    }
+  });
+
+  // Move book to library (from wishlist)
+  app.post("/api/books/:id/move-to-library", async (req, res) => {
+    try {
+      const book = await storage.moveToLibrary(req.params.id);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      res.json(book);
+    } catch (error) {
+      console.error("Error moving book to library:", error);
+      res.status(500).json({ error: "Failed to move book to library" });
+    }
+  });
+
+  // Move book to wishlist (from library)
+  app.post("/api/books/:id/move-to-wishlist", async (req, res) => {
+    try {
+      const book = await storage.moveToWishlist(req.params.id);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      res.json(book);
+    } catch (error) {
+      console.error("Error moving book to wishlist:", error);
+      res.status(500).json({ error: "Failed to move book to wishlist" });
     }
   });
 

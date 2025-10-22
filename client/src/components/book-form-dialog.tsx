@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -63,12 +64,14 @@ export function BookFormDialog({
           review: book.review || "",
           startDate: book.startDate || "",
           finishDate: book.finishDate || "",
+          isWishlist: book.isWishlist || 0,
         }
       : {
           title: "",
           author: "",
           isbn: "",
           status: "por_leer",
+          isWishlist: 0,
         },
   });
 
@@ -421,6 +424,32 @@ export function BookFormDialog({
               )}
             </div>
 
+            {!book && (
+              <FormField
+                control={form.control}
+                name="isWishlist"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value === 1}
+                        onCheckedChange={(checked) => field.onChange(checked ? 1 : 0)}
+                        data-testid="checkbox-wishlist"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Añadir a Lista de Deseos
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Este libro se guardará en tu lista de deseos en lugar de tu biblioteca
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
+
             <div className="flex gap-3 justify-end">
               <Button
                 type="button"
@@ -430,7 +459,7 @@ export function BookFormDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isPending} data-testid="button-submit">
+              <Button type="submit" disabled={isPending} data-testid="button-submit-book">
                 {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

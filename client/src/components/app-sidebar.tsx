@@ -1,4 +1,4 @@
-import { BookOpen, LayoutDashboard, BookText } from "lucide-react";
+import { BookOpen, LayoutDashboard, BookText, Heart } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -19,6 +19,12 @@ const menuItems = [
     url: "/",
     icon: BookOpen,
     testId: "link-library",
+  },
+  {
+    title: "Lista de Deseos",
+    url: "/wishlist",
+    icon: Heart,
+    testId: "link-wishlist",
   },
   {
     title: "Dashboard",

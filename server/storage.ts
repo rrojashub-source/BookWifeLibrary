@@ -20,10 +20,14 @@ export interface IStorage {
   
   // Book CRUD operations
   getAllBooks(): Promise<Book[]>;
+  getLibraryBooks(): Promise<Book[]>; // Only books in library (isWishlist = 0)
+  getWishlistBooks(): Promise<Book[]>; // Only books in wishlist (isWishlist = 1)
   getBook(id: string): Promise<Book | undefined>;
   createBook(book: InsertBook): Promise<Book>;
   updateBook(id: string, book: InsertBook): Promise<Book | undefined>;
   deleteBook(id: string): Promise<boolean>;
+  moveToLibrary(id: string): Promise<Book | undefined>; // Move from wishlist to library
+  moveToWishlist(id: string): Promise<Book | undefined>; // Move from library to wishlist
   
   // Dictionary CRUD operations
   getAllDictionaryEntries(): Promise<DictionaryEntry[]>;
@@ -74,6 +78,14 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(books).orderBy(books.dateAdded);
   }
 
+  async getLibraryBooks(): Promise<Book[]> {
+    return await db.select().from(books).where(eq(books.isWishlist, 0)).orderBy(books.dateAdded);
+  }
+
+  async getWishlistBooks(): Promise<Book[]> {
+    return await db.select().from(books).where(eq(books.isWishlist, 1)).orderBy(books.dateAdded);
+  }
+
   async getBook(id: string): Promise<Book | undefined> {
     const [book] = await db.select().from(books).where(eq(books.id, id));
     return book || undefined;
@@ -99,6 +111,24 @@ export class DatabaseStorage implements IStorage {
   async deleteBook(id: string): Promise<boolean> {
     const result = await db.delete(books).where(eq(books.id, id));
     return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async moveToLibrary(id: string): Promise<Book | undefined> {
+    const [book] = await db
+      .update(books)
+      .set({ isWishlist: 0 })
+      .where(eq(books.id, id))
+      .returning();
+    return book || undefined;
+  }
+
+  async moveToWishlist(id: string): Promise<Book | undefined> {
+    const [book] = await db
+      .update(books)
+      .set({ isWishlist: 1 })
+      .where(eq(books.id, id))
+      .returning();
+    return book || undefined;
   }
 
   // Dictionary methods
@@ -137,13 +167,14 @@ export class DatabaseStorage implements IStorage {
     const startDate = `${year}-01-01`;
     const endDate = `${year}-12-31`;
 
-    // Get books finished in the year
+    // Get books finished in the year (excluding wishlist)
     const finishedBooks = await db
       .select()
       .from(books)
       .where(
         and(
           eq(books.status, "terminado"),
+          eq(books.isWishlist, 0), // Only library books, not wishlist
           gte(books.finishDate, startDate),
           lte(books.finishDate, endDate)
         )

@@ -36,6 +36,14 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 - CRUD completo: crear, editar y eliminar entradas
 - Vista en tarjetas elegantes con iconografía
 
+### Lista de Deseos
+- **Gestión de wishlist** separada de la biblioteca principal
+- **Agregar libros a lista de deseos** directamente desde el formulario de creación
+- **Mover libros** de wishlist a biblioteca con un solo click
+- **Vista dedicada** con tarjetas elegantes
+- **Navegación fácil** con icono de corazón en el sidebar
+- Las estadísticas excluyen automáticamente los libros en wishlist
+
 ## Arquitectura Técnica
 
 ### Frontend
@@ -67,6 +75,7 @@ Tabla `books`:
 - status (por_leer | leyendo | terminado)
 - rating (1-5), review
 - startDate, finishDate, dateAdded
+- isWishlist (0 = biblioteca, 1 = lista de deseos)
 
 Tabla `dictionary_entries`:
 - id (UUID)
@@ -84,14 +93,19 @@ Tabla `dictionary_entries`:
 - `GET /api/user` - Obtener usuario actual (requiere autenticación)
 
 ### Libros
-- `GET /api/books` - Obtener todos los libros
+- `GET /api/books` - Obtener todos los libros de la biblioteca (isWishlist=0)
 - `GET /api/books/:id` - Obtener un libro específico
-- `POST /api/books` - Crear nuevo libro
+- `POST /api/books` - Crear nuevo libro (biblioteca o wishlist)
 - `PATCH /api/books/:id` - Actualizar libro
 - `DELETE /api/books/:id` - Eliminar libro
 
+### Lista de Deseos
+- `GET /api/wishlist` - Obtener todos los libros de la wishlist (isWishlist=1)
+- `POST /api/wishlist/move-to-library/:id` - Mover libro de wishlist a biblioteca
+- `POST /api/library/move-to-wishlist/:id` - Mover libro de biblioteca a wishlist
+
 ### Estadísticas
-- `GET /api/stats` - Dashboard con estadísticas completas
+- `GET /api/stats` - Dashboard con estadísticas completas (excluye wishlist)
 
 ### Diccionario
 - `GET /api/dictionary` - Obtener todas las entradas del diccionario
@@ -132,6 +146,7 @@ Tabla `dictionary_entries`:
 - ✅ Filtros avanzados
 - ✅ Sistema de calificación y reseñas
 - ✅ **Diccionario Personal** - Registro de palabras con búsqueda automática de definiciones (Spanish Dictionary API)
+- ✅ **Lista de Deseos** - Gestión de wishlist con mover libros entre wishlist y biblioteca
 - ✅ Diseño responsive
 - ✅ Modo oscuro/claro
 - ✅ Base de datos PostgreSQL
@@ -165,6 +180,13 @@ Tabla `dictionary_entries`:
 4. Agrega fechas, calificación y reseña
 5. Guarda los cambios
 
+### Usar Lista de Deseos
+1. Al agregar un nuevo libro, marca la casilla "Añadir a Lista de Deseos"
+2. El libro se guardará en la lista de deseos en lugar de la biblioteca
+3. Navega a "Lista de Deseos" en el sidebar para ver tus libros pendientes
+4. Click en un libro y presiona "Mover a Biblioteca" cuando lo adquieras
+5. El libro se moverá automáticamente a tu biblioteca principal
+
 ## Comandos de Desarrollo
 
 - `npm run dev` - Inicia servidor de desarrollo
@@ -175,4 +197,5 @@ Tabla `dictionary_entries`:
 - Los datos se guardan permanentemente en PostgreSQL
 - La búsqueda por ISBN es opcional - todos los campos pueden ingresarse manualmente
 - Las páginas siempre pueden editarse manualmente incluso si vienen de la API
-- Las estadísticas solo incluyen libros con estado "Terminado"
+- Las estadísticas solo incluyen libros con estado "Terminado" y excluyen libros en wishlist
+- Los libros en lista de deseos no aparecen en las estadísticas hasta que se mueven a la biblioteca

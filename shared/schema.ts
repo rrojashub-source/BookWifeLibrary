@@ -37,6 +37,7 @@ export const books = pgTable("books", {
   startDate: date("start_date"),
   finishDate: date("finish_date"),
   dateAdded: timestamp("date_added").notNull().defaultNow(),
+  isWishlist: integer("is_wishlist").notNull().default(0), // 0 = in library, 1 = wishlist
 });
 
 export const insertBookSchema = createInsertSchema(books, {
@@ -51,6 +52,7 @@ export const insertBookSchema = createInsertSchema(books, {
   review: z.string().optional(),
   startDate: z.string().optional(),
   finishDate: z.string().optional(),
+  isWishlist: z.number().int().min(0).max(1).optional(),
 }).omit({
   id: true,
   dateAdded: true,
