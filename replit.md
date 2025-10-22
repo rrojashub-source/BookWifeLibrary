@@ -57,3 +57,42 @@ Comprehensive RESTful API for authentication, book management, wishlist operatio
 - **PM2**: Process manager for Node.js applications in production.
 - **Nginx**: Reverse proxy for deployment.
 - **Let's Encrypt**: For SSL certificate management.
+
+## Deployment
+
+### Production Deployment
+- **Platform**: Replit deployment (currently active)
+- **URL**: https://book-wife-library-rrojashub.replit.app/auth
+- **Status**: ✅ Live and operational
+- **Database**: PostgreSQL production database on Replit
+
+### VPS Deployment (Learning Resource)
+- **Server**: Hostinger KVM 1, Ubuntu 24.04, IP: 72.60.115.169
+- **Intended Domain**: bibliotecamoi.com
+- **Status**: Prepared for deployment
+- **Purpose**: Educational resource for future enterprise projects
+
+### Deployment Lessons Learned
+
+**Critical Fixes for Successful Deployment:**
+
+1. **Health Check Endpoint**: Added `/health` endpoint in `server/index.ts` to enable platform health checks during deployment initialization.
+
+2. **Password Hashing**: Application uses scrypt for password hashing with format `hash.salt`. Production database users must have properly hashed passwords (not plain text).
+
+3. **PM2 Configuration with ES Modules**: Created `ecosystem.config.cjs` that uses tsx interpreter to handle TypeScript and ES modules correctly. PM2 doesn't support ES modules by default.
+
+4. **Error Handling**: Improved server startup error handling with try-catch blocks and proper logging to identify initialization failures.
+
+5. **Database Initialization**: Created `init-database.sql` to properly initialize users with correct password hashes in production environments.
+
+**Key Files for Deployment:**
+- `deploy-vps.sh`: Automated VPS deployment script
+- `ecosystem.config.cjs`: PM2 configuration for ES modules
+- `init-database.sql`: Database user initialization
+- `GUIA-VPS-COMPLETA.md`: Comprehensive educational guide for VPS deployment
+- `DEPLOYMENT.md`: General deployment documentation
+
+**Authentication Credentials (Production):**
+- Username: `moi`
+- Password: `Delgado1509#` (stored as scrypt hash in database)
