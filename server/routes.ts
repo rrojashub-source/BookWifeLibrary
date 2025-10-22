@@ -455,8 +455,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const userId = req.user!.id;
-      const validatedData = insertCustomAuthorSchema.parse({ ...req.body, userId });
-      const author = await storage.createCustomAuthor(validatedData);
+      // Validate without userId (it comes from session, not client)
+      const validatedData = insertCustomAuthorSchema.omit({ userId: true }).parse(req.body);
+      const author = await storage.createCustomAuthor({ ...validatedData, userId });
       res.status(201).json(author);
     } catch (error: any) {
       console.error("Error creating custom author:", error);
@@ -483,8 +484,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingAuthor.userId !== userId) {
         return res.status(403).json({ error: "Forbidden" });
       }
-      const validatedData = insertCustomAuthorSchema.parse({ ...req.body, userId });
-      const author = await storage.updateCustomAuthor(req.params.id, validatedData);
+      // Validate without userId (it comes from session, not client)
+      const validatedData = insertCustomAuthorSchema.omit({ userId: true }).parse(req.body);
+      const author = await storage.updateCustomAuthor(req.params.id, { ...validatedData, userId });
       res.json(author);
     } catch (error: any) {
       console.error("Error updating custom author:", error);
