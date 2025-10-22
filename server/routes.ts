@@ -110,10 +110,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/dictionary", async (req, res) => {
     try {
       const validatedData = insertDictionaryEntrySchema.parse(req.body);
-      // Convert empty string bookId to null for database foreign key
+      // Convert empty string bookId to undefined for storage interface
       const entryData = {
         ...validatedData,
-        bookId: validatedData.bookId && validatedData.bookId !== "" ? validatedData.bookId : null,
+        bookId: validatedData.bookId && validatedData.bookId !== "" ? validatedData.bookId : undefined,
       };
       const entry = await storage.createDictionaryEntry(entryData);
       res.status(201).json(entry);
@@ -130,10 +130,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/dictionary/:id", async (req, res) => {
     try {
       const validatedData = insertDictionaryEntrySchema.parse(req.body);
-      // Convert empty string bookId to null for database foreign key
+      // Convert empty string bookId to undefined for storage interface
       const entryData = {
         ...validatedData,
-        bookId: validatedData.bookId && validatedData.bookId !== "" ? validatedData.bookId : null,
+        bookId: validatedData.bookId && validatedData.bookId !== "" ? validatedData.bookId : undefined,
       };
       const entry = await storage.updateDictionaryEntry(req.params.id, entryData);
       if (!entry) {
