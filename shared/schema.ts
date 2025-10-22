@@ -84,6 +84,29 @@ export const insertDictionaryEntrySchema = createInsertSchema(dictionaryEntries,
 export type InsertDictionaryEntry = z.infer<typeof insertDictionaryEntrySchema>;
 export type DictionaryEntry = typeof dictionaryEntries.$inferSelect;
 
+// Reading goals table
+export const readingGoals = pgTable("reading_goals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  year: integer("year").notNull(),
+  type: text("type").notNull(), // 'books' or 'pages'
+  target: integer("target").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertReadingGoalSchema = createInsertSchema(readingGoals, {
+  year: z.number().int().min(2000).max(2100),
+  type: z.enum(["books", "pages"]),
+  target: z.number().int().positive("El objetivo debe ser un número positivo"),
+  userId: z.number().int(),
+}).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertReadingGoal = z.infer<typeof insertReadingGoalSchema>;
+export type ReadingGoal = typeof readingGoals.$inferSelect;
+
 // Statistics types for frontend
 export interface MonthlyStats {
   month: string; // YYYY-MM format
