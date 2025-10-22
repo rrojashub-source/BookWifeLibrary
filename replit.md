@@ -1,320 +1,59 @@
 # Biblioteca Moi
 
-## Descripción General
-Aplicación web de gestión de biblioteca personal diseñada específicamente para llevar un control detallado de una colección de libros católicos y espirituales, progreso de lectura, y estadísticas tanto mensuales como anuales. La aplicación está optimizada para uso en iPhone, tablet y escritorio con un diseño elegante en turquesa y blanco.
+## Overview
+Biblioteca Moi is a web application designed for personal library management, focusing on Catholic and spiritual books. It enables users to track their collection, monitor reading progress, and view monthly and annual statistics. The application features a clean turquoise and white design, optimized for responsive use across iPhone, tablet, and desktop. Its core purpose is to provide a dedicated tool for spiritual reading management, offering features like ISBN scanning, reading goals, a personal dictionary, and curated author resources.
 
-## Características Principales
+## User Preferences
+I prefer simple language and clear explanations. I want iterative development, with regular updates and opportunities for feedback. Ask before making major changes to the codebase or design. I value elegant and clean UI/UX with specific color palettes (turquoise and white) and religious iconography. I expect the agent to maintain the spiritual and personalized branding ("Biblioteca Moi" with a romantic dedication and an image of the Virgin Mary).
 
-### Gestión de Libros
-- **Catálogo completo** con vista en tarjetas elegantes
-- **Escaneo de códigos de barras** con cámara para captura automática de ISBN
-  - Usa librería @zxing/library para detección de ISBN-10 e ISBN-13
-  - Optimizado para iOS Safari con cámara trasera
-  - Búsqueda automática de datos del libro después del escaneo
-- **Búsqueda automática por ISBN** usando Open Library API
-- **Entrada manual** de todos los datos del libro
-- **Portadas de libros** con soporte para URLs personalizadas
-- **Tres estados de lectura**: Por Leer, Leyendo, Terminado
-- **Sistema de calificación** de 1-5 estrellas para libros terminados
-- **Reseñas personales** para cada libro
+## System Architecture
+The application employs a modern full-stack architecture.
 
-### Dashboard de Estadísticas
-- Libros leídos por mes y año
-- **Páginas leídas por mes y año**
-- Gráficos visuales interactivos (barras y líneas)
-- Comparación mensual de libros vs páginas
-- Estadísticas en tiempo real del mes actual
-- Resumen del año en curso
-- **Tarjeta de progreso de meta** que muestra avance hacia la meta del año actual
+### UI/UX Decisions
+- **Theme**: Elegant turquoise (#2ba09f) and white color palette, designed for a sophisticated and calming spiritual reading experience.
+- **Typography**: Playfair Display (serif) and Inter (sans-serif).
+- **Branding**: "Biblioteca Moi" with a personal dedication and religious iconography (Virgin Mary Queen of Peace image).
+- **Responsive Design**: Mobile-first approach with a collapsible sidebar, optimized for iPhone PWA with safe area padding.
+- **Dark/Light Mode**: Full support for both themes.
 
-### Filtros y Búsqueda
-- Búsqueda por título o autor
-- Filtro por estado de lectura
-- Filtro por género
-- Interfaz responsive optimizada para móvil
+### Technical Implementations
+- **Book Management**: Features a comprehensive catalog with card views, ISBN barcode scanning (using `@zxing/library` optimized for iOS Safari), automatic ISBN data fetching via Open Library API, manual entry, custom cover URLs, three reading states (To Read, Reading, Finished), 1-5 star rating system, and personal reviews.
+- **Statistics Dashboard**: Displays books and pages read monthly/annually, interactive charts (bar and line), monthly comparisons, real-time current month stats, and an annual goal progress card.
+- **Filters and Search**: Search by title/author, filter by reading status and genre.
+- **Personal Dictionary**: Manual entry for words, custom Spanish definitions, optional book association, and personal notes.
+- **Wishlist Management**: Separate wishlist functionality, ability to move books between wishlist and main library.
+- **Reading Goals**: Annual reading goals (books or pages) with progress visualization on the Dashboard.
+- **Catholic Authors**: Curated resources for 13 predefined spiritual authors with external links, plus a system for users to add, edit, and delete their own favorite authors.
+- **Recommendation System**: Intelligent analysis of reading habits, recommending genres and authors based on completed books and ratings, and suggesting wishlist items.
 
-### Diccionario Personal
-- **Registro manual de palabras** encontradas durante la lectura
-- **Ingreso de definiciones personalizadas** en español
-- **Asociación opcional** con libros de la biblioteca
-- **Notas personales** para contexto adicional
-- CRUD completo: crear, editar y eliminar entradas
-- Vista en tarjetas elegantes con iconografía
+### System Design Choices
+- **Frontend**: React with TypeScript, Wouter for routing, TanStack Query for server state management, React Hook Form with Zod for validation, Shadcn UI + Tailwind CSS for components, Recharts for data visualization, and date-fns for date handling.
+- **Backend**: Express.js REST API server.
+- **Database**: PostgreSQL (Neon) for data persistence, managed with Drizzle ORM for type-safe queries. Zod is used for schema validation.
 
-### Lista de Deseos
-- **Gestión de wishlist** separada de la biblioteca principal
-- **Agregar libros a lista de deseos** directamente desde el formulario de creación
-- **Mover libros** de wishlist a biblioteca con un solo click
-- **Vista dedicada** con tarjetas elegantes
-- **Navegación fácil** con icono de corazón en el sidebar
-- Las estadísticas excluyen automáticamente los libros en wishlist
+### Database Schema Highlights
+- `users`: Stores user authentication details.
+- `books`: Contains book details, reading status, ratings, and wishlist flag.
+- `dictionary_entries`: Stores user-defined dictionary words and definitions.
+- `reading_goals`: Manages annual reading goals per user.
+- `custom_authors`: Stores user-added author information.
 
-### Metas de Lectura
-- **Establecer metas anuales** de lectura (libros o páginas)
-- **CRUD completo**: crear, editar y eliminar metas por año
-- **Restricción de una meta por año** (garantizada a nivel de base de datos)
-- **Visualización de progreso en Dashboard** con barra de progreso visual
-- **Indicador de completitud** cuando se alcanza o supera la meta
-- **Navegación directa** entre Dashboard y página de Metas
+### API Endpoints
+Comprehensive RESTful API for authentication, book management, wishlist operations, statistics, dictionary, reading goals, and custom authors.
 
-### Autores Católicos
-- **Recursos curados** de autores espirituales destacados
-- **Enlaces externos** a Wikipedia, Vatican.va y sitios oficiales
-- **Organización en categorías**: Santos y Doctores, Autores Modernos, Mis Autores Favoritos
-- **Descripción biográfica** y periodo histórico de cada autor
-- **Enlaces a obras completas** y recursos digitales
-- **13 autores predefinidos**: San Agustín, Santo Tomás, Santa Teresa de Ávila, San Juan de la Cruz, San Francisco de Sales, Santa Teresa de Lisieux, G.K. Chesterton, C.S. Lewis, Papa Francisco, Papa Benedicto XVI, San Juan Pablo II, Thomas Merton, P. Javier Olivera Ravasi
-- **Autores personalizados**: Sistema completo para agregar, editar y eliminar autores favoritos
-  - Formulario dinámico con campos para nombre, descripción y periodo
-  - Gestión flexible de enlaces (agregar/eliminar múltiples enlaces)
-  - CRUD completo con autenticación por usuario
-  - Integración perfecta con autores predefinidos en una tercera categoría
-
-### Sistema de Recomendaciones
-- **Análisis inteligente** de hábitos de lectura y preferencias personales
-- **Géneros favoritos** basados en libros terminados y sus calificaciones
-- **Autores recomendados** con promedio de calificación ≥ 4 estrellas
-- **Sugerencias de wishlist** que coinciden con tus preferencias
-- **Interfaz visual** con tarjetas organizadas por categorías
-- **Estados vacíos informativos** cuando no hay datos suficientes
-- Algoritmo de recomendación que considera:
-  - Cantidad de libros leídos por género
-  - Promedio de calificaciones por género y autor
-  - Coincidencias entre wishlist y preferencias identificadas
-
-## Arquitectura Técnica
-
-### Frontend
-- **React** con TypeScript
-- **Wouter** para routing
-- **TanStack Query** para gestión de estado del servidor
-- **React Hook Form** con validación Zod
-- **Shadcn UI** + **Tailwind CSS** para componentes
-- **Recharts** para visualizaciones de datos
-- **date-fns** para manejo de fechas
-
-### Backend
-- **Express.js** servidor API REST
-- **PostgreSQL** (Neon) para persistencia
-- **Drizzle ORM** para queries type-safe
-- **Zod** para validación de schemas
-
-### Base de Datos
-Tabla `users`:
-- id (serial)
-- username (unique)
-- password (hashed with scrypt)
-- createdAt
-
-Tabla `books`:
-- id (UUID)
-- title, author, isbn
-- pages, coverUrl, genre
-- status (por_leer | leyendo | terminado)
-- rating (1-5), review
-- startDate, finishDate, dateAdded
-- isWishlist (0 = biblioteca, 1 = lista de deseos)
-
-Tabla `dictionary_entries`:
-- id (UUID)
-- word, definition, notes
-- bookId (foreign key a books, opcional, set null on delete)
-- userId (foreign key a users)
-- createdAt
-
-Tabla `reading_goals`:
-- id (UUID)
-- year (integer, unique per user)
-- type (books | pages)
-- target (integer)
-- userId (foreign key a users)
-- createdAt
-
-Tabla `custom_authors`:
-- id (UUID)
-- name, description, period
-- links (JSON string)
-- userId (foreign key a users)
-- createdAt
-
-## API Endpoints
-
-### Autenticación
-- `POST /api/register` - Registrar nuevo usuario (validación Zod, contraseña hasheada)
-- `POST /api/login` - Iniciar sesión (validación Zod, cookies seguras)
-- `POST /api/logout` - Cerrar sesión
-- `GET /api/user` - Obtener usuario actual (requiere autenticación)
-
-### Libros
-- `GET /api/books` - Obtener todos los libros de la biblioteca (isWishlist=0)
-- `GET /api/books/:id` - Obtener un libro específico
-- `POST /api/books` - Crear nuevo libro (biblioteca o wishlist)
-- `PATCH /api/books/:id` - Actualizar libro
-- `DELETE /api/books/:id` - Eliminar libro
-
-### Lista de Deseos
-- `GET /api/wishlist` - Obtener todos los libros de la wishlist (isWishlist=1)
-- `POST /api/wishlist/move-to-library/:id` - Mover libro de wishlist a biblioteca
-- `POST /api/library/move-to-wishlist/:id` - Mover libro de biblioteca a wishlist
-
-### Estadísticas
-- `GET /api/stats` - Dashboard con estadísticas completas (excluye wishlist)
-- `GET /api/recommendations` - Obtener recomendaciones personalizadas basadas en hábitos de lectura
-
-### Diccionario
-- `GET /api/dictionary` - Obtener todas las entradas del diccionario
-- `GET /api/dictionary/:id` - Obtener una entrada específica
-- `POST /api/dictionary` - Crear nueva entrada
-- `PATCH /api/dictionary/:id` - Actualizar entrada
-- `DELETE /api/dictionary/:id` - Eliminar entrada
-
-### Metas de Lectura
-- `GET /api/goals` - Obtener todas las metas del usuario
-- `GET /api/goals/:id` - Obtener una meta específica
-- `GET /api/goals/year/:year` - Obtener meta del año específico
-- `POST /api/goals` - Crear nueva meta
-- `PATCH /api/goals/:id` - Actualizar meta
-- `DELETE /api/goals/:id` - Eliminar meta
-
-### Autores Personalizados
-- `GET /api/custom-authors` - Obtener todos los autores personalizados del usuario
-- `GET /api/custom-authors/:id` - Obtener un autor específico
-- `POST /api/custom-authors` - Crear nuevo autor personalizado
-- `PATCH /api/custom-authors/:id` - Actualizar autor personalizado
-- `DELETE /api/custom-authors/:id` - Eliminar autor personalizado
-
-## Diseño Visual
-
-### Tema
-- Paleta de colores elegante: Turquesa (#2ba09f) con blanco
-- Diseño sofisticado y calmado, perfecto para lectura espiritual
-- Soporte completo para modo oscuro/claro
-- Tipografía: Playfair Display (serif) + Inter (sans-serif)
-- Dedicatoria personal en el sidebar
-- Imagen de la Virgen María Reina de la Paz (Medjugorje)
-
-### Responsive Design
-- Mobile-first approach
-- Sidebar colapsable en móvil
-- Optimizado para iPhone con meta tags PWA
-- Safe area padding para notch/Dynamic Island
-
-## Estado del Proyecto
-
-**Última actualización**: Octubre 2025
-
-### Características Implementadas ✅
-- ✅ **Autenticación Privada** - Solo login (registro público deshabilitado por seguridad)
-- ✅ **Sesiones Seguras** - PostgreSQL session store + cookies httpOnly + Passport.js
-- ✅ **Diseño Turquesa Elegante** - Paleta turquesa/blanco optimizada para contenido espiritual
-- ✅ **Branding Personalizado** - "Biblioteca Moi" con dedicatoria romántica
-- ✅ **Iconografía Religiosa** - Imagen de la Virgen María Reina de la Paz
-- ✅ CRUD completo de libros
-- ✅ **Escaneo de Códigos de Barras** - Captura de ISBN con cámara (optimizado para iOS Safari)
-- ✅ Búsqueda por ISBN con Open Library API
-- ✅ Dashboard de estadísticas con gráficos
-- ✅ Filtros avanzados
-- ✅ Sistema de calificación y reseñas
-- ✅ **Diccionario Personal** - Registro manual de palabras con definiciones personalizadas
-- ✅ **Lista de Deseos** - Gestión de wishlist con mover libros entre wishlist y biblioteca
-- ✅ **Metas de Lectura** - Sistema completo de metas anuales con seguimiento de progreso en dashboard
-- ✅ **Autores Católicos** - Página de recursos con 13 autores predefinidos y sistema de autores personalizados
-- ✅ **Sistema de Recomendaciones** - Análisis inteligente de hábitos de lectura con sugerencias personalizadas
-- ✅ Diseño responsive
-- ✅ Modo oscuro/claro
-- ✅ Base de datos PostgreSQL
-
-### Próximas Características
-- 📚 Sistema de préstamos
-- 📊 Exportación en PDF/CSV
-- 🔄 Modo offline con sincronización
-
-## Cómo Usar
-
-### Agregar un Libro con Escaneo de Código de Barras
-1. Click en "Agregar Libro"
-2. Presiona el botón "Escanear" junto al campo ISBN
-3. Permite el acceso a la cámara cuando se solicite
-4. Apunta la cámara trasera al código de barras del libro
-5. El ISBN se capturará automáticamente y se buscarán los datos del libro
-6. Completa o ajusta la información adicional
-7. Guarda el libro
-
-### Agregar un Libro Manualmente
-1. Click en "Agregar Libro"
-2. Ingresa el ISBN y presiona "Buscar" (opcional)
-3. Completa o ajusta la información
-4. Selecciona el estado de lectura
-5. Guarda el libro
-
-### Ver Estadísticas
-1. Navega a "Dashboard"
-2. Visualiza métricas del mes y año actual
-3. Cambia entre tabs para ver diferentes gráficos
-4. Compara libros vs páginas leídas
-
-### Marcar Libro como Terminado
-1. Click en la tarjeta del libro
-2. Presiona "Editar"
-3. Cambia estado a "Terminado"
-4. Agrega fechas, calificación y reseña
-5. Guarda los cambios
-
-### Usar Lista de Deseos
-1. Al agregar un nuevo libro, marca la casilla "Añadir a Lista de Deseos"
-2. El libro se guardará en la lista de deseos en lugar de la biblioteca
-3. Navega a "Lista de Deseos" en el sidebar para ver tus libros pendientes
-4. Click en un libro y presiona "Mover a Biblioteca" cuando lo adquieras
-5. El libro se moverá automáticamente a tu biblioteca principal
-
-### Establecer y Ver Metas de Lectura
-1. Navega a "Metas" en el sidebar
-2. Completa el formulario con el año, tipo (libros o páginas) y objetivo
-3. Click en "Crear Meta"
-4. Edita o elimina metas existentes usando los botones en las tarjetas
-5. Navega al Dashboard para ver tu progreso visual hacia la meta del año actual
-6. La tarjeta de progreso muestra cuántos libros/páginas llevas y cuánto te falta
-
-### Explorar Autores Católicos
-1. Navega a "Autores" en el sidebar
-2. Explora las tarjetas con información de cada autor
-3. Lee la descripción biográfica y periodo histórico
-4. Click en los botones de enlaces externos para acceder a:
-   - Wikipedia (biografía completa)
-   - Vatican.va (documentos oficiales)
-   - Obras completas (textos digitales)
-5. Los enlaces se abren en una nueva pestaña para facilitar la navegación
-
-### Agregar Autores Personalizados
-1. Navega a "Autores" en el sidebar
-2. En la categoría "Mis Autores Favoritos", click en "Agregar Autor"
-3. Completa el formulario:
-   - Nombre del autor
-   - Descripción biográfica
-   - Periodo histórico (opcional)
-   - Enlaces y recursos (agregar múltiples enlaces con etiquetas y URLs)
-4. Click en "Agregar enlace" para agregar más enlaces si es necesario
-5. Presiona "Agregar" para guardar el autor
-6. Edita o elimina autores personalizados usando los botones en las tarjetas
-7. Los autores personalizados aparecen en la categoría "Mis Autores Favoritos"
-
-### Ver Recomendaciones Personalizadas
-1. Navega a "Recomendaciones" en el sidebar
-2. Explora tus géneros favoritos basados en libros leídos y calificaciones
-3. Descubre autores recomendados con alta calificación promedio
-4. Revisa sugerencias de tu wishlist que coinciden con tus preferencias
-5. Las recomendaciones mejoran automáticamente a medida que termines y califiques más libros
-6. Lee la sección informativa sobre cómo funciona el algoritmo de recomendaciones
-
-## Comandos de Desarrollo
-
-- `npm run dev` - Inicia servidor de desarrollo
-- `npm run db:push` - Sincroniza schema con base de datos
-- `npm run build` - Build para producción
-
-## Notas
-- Los datos se guardan permanentemente en PostgreSQL
-- La búsqueda por ISBN es opcional - todos los campos pueden ingresarse manualmente
-- Las páginas siempre pueden editarse manualmente incluso si vienen de la API
-- Las estadísticas solo incluyen libros con estado "Terminado" y excluyen libros en wishlist
-- Los libros en lista de deseos no aparecen en las estadísticas hasta que se mueven a la biblioteca
+## External Dependencies
+- **Open Library API**: Used for automatic book data retrieval via ISBN.
+- **@zxing/library**: JavaScript library for barcode scanning, specifically used for ISBN capture.
+- **PostgreSQL (Neon)**: The primary database for data persistence.
+- **Express.js**: Backend framework.
+- **React**: Frontend library.
+- **Wouter**: Client-side routing.
+- **TanStack Query**: Data fetching and state management.
+- **React Hook Form**: Form management.
+- **Zod**: Schema validation (both frontend and backend).
+- **Shadcn UI / Tailwind CSS**: UI component library and styling framework.
+- **Recharts**: Charting library for data visualization.
+- **date-fns**: Date utility library.
+- **PM2**: Process manager for Node.js applications in production.
+- **Nginx**: Reverse proxy for deployment.
+- **Let's Encrypt**: For SSL certificate management.
