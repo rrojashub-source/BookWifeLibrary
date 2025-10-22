@@ -200,6 +200,7 @@ function CustomAuthorForm({ author, onSuccess, onCancel }: CustomAuthorFormProps
       apiRequest("POST", "/api/custom-authors", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/custom-authors"] });
+      form.reset();
       toast({
         title: "Autor agregado",
         description: "El autor ha sido agregado exitosamente.",
@@ -220,6 +221,7 @@ function CustomAuthorForm({ author, onSuccess, onCancel }: CustomAuthorFormProps
       apiRequest("PATCH", `/api/custom-authors/${author?.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/custom-authors"] });
+      form.reset();
       toast({
         title: "Autor actualizado",
         description: "El autor ha sido actualizado exitosamente.",
