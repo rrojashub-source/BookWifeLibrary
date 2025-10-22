@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBookSchema, insertDictionaryEntrySchema, insertReadingGoalSchema } from "@shared/schema";
+import { insertBookSchema, insertDictionaryEntrySchema, insertReadingGoalSchema, insertCustomAuthorSchema } from "@shared/schema";
 import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -405,6 +405,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ error: "Failed to fetch statistics" });
+    }
+  });
+
+  // Custom Authors endpoints
+  // Get all custom authors for current user
+  app.get("/api/custom-authors", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const authors = await storage.getAllCustomAuthors(userId);
+      res.json(authors);
+    } catch (error) {
+      console.error("Error fetching custom authors:", error);
+      res.status(500).json({ error: "Failed to fetch custom authors" });
+    }
+  });
+
+  // Get single custom author
+  app.get("/api/custom-authors/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const author = await storage.getCustomAuthor(req.params.id);
+      if (!author) {
+        return res.status(404).json({ error: "Author not found" });
+      }
+      // Ensure user can only access their own custom authors
+      if (author.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      res.json(author);
+    } catch (error) {
+      console.error("Error fetching custom author:", error);
+      res.status(500).json({ error: "Failed to fetch custom author" });
+    }
+  });
+
+  // Create new custom author
+  app.post("/api/custom-authors", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const validatedData = insertCustomAuthorSchema.parse({ ...req.body, userId });
+      const author = await storage.createCustomAuthor(validatedData);
+      res.status(201).json(author);
+    } catch (error: any) {
+      console.error("Error creating custom author:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid author data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create custom author" });
+    }
+  });
+
+  // Update custom author
+  app.patch("/api/custom-authors/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const existingAuthor = await storage.getCustomAuthor(req.params.id);
+      if (!existingAuthor) {
+        return res.status(404).json({ error: "Author not found" });
+      }
+      // Ensure user can only update their own custom authors
+      if (existingAuthor.userId !== userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      const validatedData = insertCustomAuthorSchema.parse({ ...req.body, userId });
+      const author = await storage.updateCustomAuthor(req.params.id, validatedData);
+      res.json(author);
+    } catch (error: any) {
+      console.error("Error updating custom author:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid author data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update custom author" });
+    }
+  });
+
+  // Delete custom author
+  app.delete("/api/custom-authors/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const author = await storage.getCustomAuthor(req.params.id);
+      if (!author) {
+        return res.status(404).json({ error: "Author not found" });
+      }
+      // Ensure user can only delete their own custom authors
+      if (author.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      const success = await storage.deleteCustomAuthor(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Author not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting custom author:", error);
+      res.status(500).json({ error: "Failed to delete custom author" });
     }
   });
 

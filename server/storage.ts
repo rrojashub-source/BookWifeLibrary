@@ -3,7 +3,8 @@ import {
   books, type Book, type InsertBook, 
   users, type User, type InsertUser,
   dictionaryEntries, type DictionaryEntry, type InsertDictionaryEntry,
-  readingGoals, type ReadingGoal, type InsertReadingGoal
+  readingGoals, type ReadingGoal, type InsertReadingGoal,
+  customAuthors, type CustomAuthor, type InsertCustomAuthor
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
@@ -44,6 +45,13 @@ export interface IStorage {
   createReadingGoal(goal: InsertReadingGoal): Promise<ReadingGoal>;
   updateReadingGoal(id: string, goal: InsertReadingGoal): Promise<ReadingGoal | undefined>;
   deleteReadingGoal(id: string): Promise<boolean>;
+  
+  // Custom authors CRUD operations
+  getAllCustomAuthors(userId: number): Promise<CustomAuthor[]>;
+  getCustomAuthor(id: string): Promise<CustomAuthor | undefined>;
+  createCustomAuthor(author: InsertCustomAuthor): Promise<CustomAuthor>;
+  updateCustomAuthor(id: string, author: InsertCustomAuthor): Promise<CustomAuthor | undefined>;
+  deleteCustomAuthor(id: string): Promise<boolean>;
   
   // Statistics
   getMonthlyStats(year: number): Promise<any[]>;
@@ -270,6 +278,45 @@ export class DatabaseStorage implements IStorage {
       pagesRead: monthlyStats.reduce((sum, m) => sum + m.pagesRead, 0),
       monthlyBreakdown: monthlyStats,
     };
+  }
+
+  // Custom authors methods
+  async getAllCustomAuthors(userId: number): Promise<CustomAuthor[]> {
+    return await db
+      .select()
+      .from(customAuthors)
+      .where(eq(customAuthors.userId, userId))
+      .orderBy(customAuthors.createdAt);
+  }
+
+  async getCustomAuthor(id: string): Promise<CustomAuthor | undefined> {
+    const [author] = await db
+      .select()
+      .from(customAuthors)
+      .where(eq(customAuthors.id, id));
+    return author || undefined;
+  }
+
+  async createCustomAuthor(insertAuthor: InsertCustomAuthor): Promise<CustomAuthor> {
+    const [author] = await db
+      .insert(customAuthors)
+      .values(insertAuthor)
+      .returning();
+    return author;
+  }
+
+  async updateCustomAuthor(id: string, insertAuthor: InsertCustomAuthor): Promise<CustomAuthor | undefined> {
+    const [author] = await db
+      .update(customAuthors)
+      .set(insertAuthor)
+      .where(eq(customAuthors.id, id))
+      .returning();
+    return author || undefined;
+  }
+
+  async deleteCustomAuthor(id: string): Promise<boolean> {
+    const result = await db.delete(customAuthors).where(eq(customAuthors.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 

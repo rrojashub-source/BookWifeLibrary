@@ -109,6 +109,31 @@ export const insertReadingGoalSchema = createInsertSchema(readingGoals, {
 export type InsertReadingGoal = z.infer<typeof insertReadingGoalSchema>;
 export type ReadingGoal = typeof readingGoals.$inferSelect;
 
+// Custom authors table
+export const customAuthors = pgTable("custom_authors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  period: text("period"),
+  links: text("links").notNull(), // JSON stringified array of {label, url}
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCustomAuthorSchema = createInsertSchema(customAuthors, {
+  name: z.string().min(1, "El nombre es requerido"),
+  description: z.string().min(1, "La descripción es requerida"),
+  period: z.string().optional(),
+  links: z.string().min(1, "Debe incluir al menos un enlace"),
+  userId: z.number().int(),
+}).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCustomAuthor = z.infer<typeof insertCustomAuthorSchema>;
+export type CustomAuthor = typeof customAuthors.$inferSelect;
+
 // Statistics types for frontend
 export interface MonthlyStats {
   month: string; // YYYY-MM format

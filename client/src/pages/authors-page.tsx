@@ -149,6 +149,15 @@ const categories: AuthorCategory[] = [
           { label: "Laudato Si'", url: "https://www.vatican.va/content/francesco/es/encyclicals/documents/papa-francesco_20150524_enciclica-laudato-si.html" },
         ],
       },
+      {
+        name: "P. Javier Olivera Ravasi",
+        description: "Sacerdote argentino, escritor y apologeta. Fundador de la editorial 'Que no te la cuenten' dedicada a la difusión de la fe católica. Sus obras abordan temas de actualidad desde una perspectiva católica tradicional.",
+        period: "1969-presente",
+        links: [
+          { label: "Editorial Que no te la cuenten", url: "https://editorial.quenotelacuenten.org/productos/" },
+          { label: "Sitio web", url: "https://quenotelacuenten.org/" },
+        ],
+      },
     ],
   },
 ];
