@@ -25,6 +25,7 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 - Comparación mensual de libros vs páginas
 - Estadísticas en tiempo real del mes actual
 - Resumen del año en curso
+- **Tarjeta de progreso de meta** que muestra avance hacia la meta del año actual
 
 ### Filtros y Búsqueda
 - Búsqueda por título o autor
@@ -47,6 +48,14 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 - **Vista dedicada** con tarjetas elegantes
 - **Navegación fácil** con icono de corazón en el sidebar
 - Las estadísticas excluyen automáticamente los libros en wishlist
+
+### Metas de Lectura
+- **Establecer metas anuales** de lectura (libros o páginas)
+- **CRUD completo**: crear, editar y eliminar metas por año
+- **Restricción de una meta por año** (garantizada a nivel de base de datos)
+- **Visualización de progreso en Dashboard** con barra de progreso visual
+- **Indicador de completitud** cuando se alcanza o supera la meta
+- **Navegación directa** entre Dashboard y página de Metas
 
 ## Arquitectura Técnica
 
@@ -152,13 +161,13 @@ Tabla `dictionary_entries`:
 - ✅ Sistema de calificación y reseñas
 - ✅ **Diccionario Personal** - Registro manual de palabras con definiciones personalizadas
 - ✅ **Lista de Deseos** - Gestión de wishlist con mover libros entre wishlist y biblioteca
+- ✅ **Metas de Lectura** - Sistema completo de metas anuales con seguimiento de progreso en dashboard
 - ✅ Diseño responsive
 - ✅ Modo oscuro/claro
 - ✅ Base de datos PostgreSQL
 
 ### Próximas Características
 - 📚 Sistema de préstamos
-- 🎯 Metas de lectura anuales
 - 📊 Exportación en PDF/CSV
 - 🔄 Modo offline con sincronización
 - 📖 Enlaces a autores católicos destacados
@@ -201,6 +210,14 @@ Tabla `dictionary_entries`:
 3. Navega a "Lista de Deseos" en el sidebar para ver tus libros pendientes
 4. Click en un libro y presiona "Mover a Biblioteca" cuando lo adquieras
 5. El libro se moverá automáticamente a tu biblioteca principal
+
+### Establecer y Ver Metas de Lectura
+1. Navega a "Metas" en el sidebar
+2. Completa el formulario con el año, tipo (libros o páginas) y objetivo
+3. Click en "Crear Meta"
+4. Edita o elimina metas existentes usando los botones en las tarjetas
+5. Navega al Dashboard para ver tu progreso visual hacia la meta del año actual
+6. La tarjeta de progreso muestra cuántos libros/páginas llevas y cuánto te falta
 
 ## Comandos de Desarrollo
 

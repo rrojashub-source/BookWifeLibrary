@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardStats } from "@shared/schema";
 import { StatsCard } from "@/components/stats-card";
 import { MonthlyBooksChart, MonthlyPagesChart, YearlyComparisonChart } from "@/components/charts";
+import { GoalProgressCard } from "@/components/goal-progress-card";
 import { BookOpen, BookCheck, Clock, FileText, TrendingUp, Loader2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -117,6 +118,12 @@ export default function Dashboard() {
             description={new Date().toLocaleDateString("es", { month: "long", year: "numeric" })}
           />
         </div>
+
+        <GoalProgressCard
+          booksFinished={stats.currentYearStats.booksRead}
+          totalPagesRead={stats.currentYearStats.pagesRead}
+          year={currentYear}
+        />
 
         <Tabs defaultValue="books" className="w-full">
           <TabsList className="w-full sm:w-auto">
