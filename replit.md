@@ -70,6 +70,18 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
   - CRUD completo con autenticación por usuario
   - Integración perfecta con autores predefinidos en una tercera categoría
 
+### Sistema de Recomendaciones
+- **Análisis inteligente** de hábitos de lectura y preferencias personales
+- **Géneros favoritos** basados en libros terminados y sus calificaciones
+- **Autores recomendados** con promedio de calificación ≥ 4 estrellas
+- **Sugerencias de wishlist** que coinciden con tus preferencias
+- **Interfaz visual** con tarjetas organizadas por categorías
+- **Estados vacíos informativos** cuando no hay datos suficientes
+- Algoritmo de recomendación que considera:
+  - Cantidad de libros leídos por género
+  - Promedio de calificaciones por género y autor
+  - Coincidencias entre wishlist y preferencias identificadas
+
 ## Arquitectura Técnica
 
 ### Frontend
@@ -147,6 +159,7 @@ Tabla `custom_authors`:
 
 ### Estadísticas
 - `GET /api/stats` - Dashboard con estadísticas completas (excluye wishlist)
+- `GET /api/recommendations` - Obtener recomendaciones personalizadas basadas en hábitos de lectura
 
 ### Diccionario
 - `GET /api/dictionary` - Obtener todas las entradas del diccionario
@@ -206,6 +219,7 @@ Tabla `custom_authors`:
 - ✅ **Lista de Deseos** - Gestión de wishlist con mover libros entre wishlist y biblioteca
 - ✅ **Metas de Lectura** - Sistema completo de metas anuales con seguimiento de progreso en dashboard
 - ✅ **Autores Católicos** - Página de recursos con 13 autores predefinidos y sistema de autores personalizados
+- ✅ **Sistema de Recomendaciones** - Análisis inteligente de hábitos de lectura con sugerencias personalizadas
 - ✅ Diseño responsive
 - ✅ Modo oscuro/claro
 - ✅ Base de datos PostgreSQL
@@ -214,7 +228,6 @@ Tabla `custom_authors`:
 - 📚 Sistema de préstamos
 - 📊 Exportación en PDF/CSV
 - 🔄 Modo offline con sincronización
-- 💡 Sistema de recomendaciones
 
 ## Cómo Usar
 
@@ -284,6 +297,14 @@ Tabla `custom_authors`:
 5. Presiona "Agregar" para guardar el autor
 6. Edita o elimina autores personalizados usando los botones en las tarjetas
 7. Los autores personalizados aparecen en la categoría "Mis Autores Favoritos"
+
+### Ver Recomendaciones Personalizadas
+1. Navega a "Recomendaciones" en el sidebar
+2. Explora tus géneros favoritos basados en libros leídos y calificaciones
+3. Descubre autores recomendados con alta calificación promedio
+4. Revisa sugerencias de tu wishlist que coinciden con tus preferencias
+5. Las recomendaciones mejoran automáticamente a medida que termines y califiques más libros
+6. Lee la sección informativa sobre cómo funciona el algoritmo de recomendaciones
 
 ## Comandos de Desarrollo
 
