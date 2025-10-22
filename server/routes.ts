@@ -481,8 +481,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const topAuthors = Object.entries(authorStats)
         .filter(([_, data]) => data.ratedCount > 0 && data.avgRating >= 4)
         .sort((a, b) => {
-          // Sort by average rating first, then by count
-          if (Math.abs(b[1].avgRating - a[1].avgRating) > 0.5) {
+          // Sort strictly by average rating first, then by count only on exact ties
+          if (b[1].avgRating !== a[1].avgRating) {
             return b[1].avgRating - a[1].avgRating;
           }
           return b[1].count - a[1].count;
