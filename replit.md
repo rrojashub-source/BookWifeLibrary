@@ -60,10 +60,15 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 ### Autores Católicos
 - **Recursos curados** de autores espirituales destacados
 - **Enlaces externos** a Wikipedia, Vatican.va y sitios oficiales
-- **Organización por autores**: Santos y Doctores, místicos, autores modernos
+- **Organización en categorías**: Santos y Doctores, Autores Modernos, Mis Autores Favoritos
 - **Descripción biográfica** y periodo histórico de cada autor
 - **Enlaces a obras completas** y recursos digitales
-- **12 autores destacados**: San Agustín, Santo Tomás, Santa Teresa de Ávila, San Juan de la Cruz, San Francisco de Sales, Santa Teresa de Lisieux, G.K. Chesterton, C.S. Lewis, Papa Francisco, Papa Benedicto XVI, San Juan Pablo II, Thomas Merton
+- **13 autores predefinidos**: San Agustín, Santo Tomás, Santa Teresa de Ávila, San Juan de la Cruz, San Francisco de Sales, Santa Teresa de Lisieux, G.K. Chesterton, C.S. Lewis, Papa Francisco, Papa Benedicto XVI, San Juan Pablo II, Thomas Merton, P. Javier Olivera Ravasi
+- **Autores personalizados**: Sistema completo para agregar, editar y eliminar autores favoritos
+  - Formulario dinámico con campos para nombre, descripción y periodo
+  - Gestión flexible de enlaces (agregar/eliminar múltiples enlaces)
+  - CRUD completo con autenticación por usuario
+  - Integración perfecta con autores predefinidos en una tercera categoría
 
 ## Arquitectura Técnica
 
@@ -105,6 +110,21 @@ Tabla `dictionary_entries`:
 - userId (foreign key a users)
 - createdAt
 
+Tabla `reading_goals`:
+- id (UUID)
+- year (integer, unique per user)
+- type (books | pages)
+- target (integer)
+- userId (foreign key a users)
+- createdAt
+
+Tabla `custom_authors`:
+- id (UUID)
+- name, description, period
+- links (JSON string)
+- userId (foreign key a users)
+- createdAt
+
 ## API Endpoints
 
 ### Autenticación
@@ -134,6 +154,21 @@ Tabla `dictionary_entries`:
 - `POST /api/dictionary` - Crear nueva entrada
 - `PATCH /api/dictionary/:id` - Actualizar entrada
 - `DELETE /api/dictionary/:id` - Eliminar entrada
+
+### Metas de Lectura
+- `GET /api/goals` - Obtener todas las metas del usuario
+- `GET /api/goals/:id` - Obtener una meta específica
+- `GET /api/goals/year/:year` - Obtener meta del año específico
+- `POST /api/goals` - Crear nueva meta
+- `PATCH /api/goals/:id` - Actualizar meta
+- `DELETE /api/goals/:id` - Eliminar meta
+
+### Autores Personalizados
+- `GET /api/custom-authors` - Obtener todos los autores personalizados del usuario
+- `GET /api/custom-authors/:id` - Obtener un autor específico
+- `POST /api/custom-authors` - Crear nuevo autor personalizado
+- `PATCH /api/custom-authors/:id` - Actualizar autor personalizado
+- `DELETE /api/custom-authors/:id` - Eliminar autor personalizado
 
 ## Diseño Visual
 
@@ -170,7 +205,7 @@ Tabla `dictionary_entries`:
 - ✅ **Diccionario Personal** - Registro manual de palabras con definiciones personalizadas
 - ✅ **Lista de Deseos** - Gestión de wishlist con mover libros entre wishlist y biblioteca
 - ✅ **Metas de Lectura** - Sistema completo de metas anuales con seguimiento de progreso en dashboard
-- ✅ **Autores Católicos** - Página de recursos con 12 autores destacados y enlaces a obras completas
+- ✅ **Autores Católicos** - Página de recursos con 13 autores predefinidos y sistema de autores personalizados
 - ✅ Diseño responsive
 - ✅ Modo oscuro/claro
 - ✅ Base de datos PostgreSQL
@@ -236,6 +271,19 @@ Tabla `dictionary_entries`:
    - Vatican.va (documentos oficiales)
    - Obras completas (textos digitales)
 5. Los enlaces se abren en una nueva pestaña para facilitar la navegación
+
+### Agregar Autores Personalizados
+1. Navega a "Autores" en el sidebar
+2. En la categoría "Mis Autores Favoritos", click en "Agregar Autor"
+3. Completa el formulario:
+   - Nombre del autor
+   - Descripción biográfica
+   - Periodo histórico (opcional)
+   - Enlaces y recursos (agregar múltiples enlaces con etiquetas y URLs)
+4. Click en "Agregar enlace" para agregar más enlaces si es necesario
+5. Presiona "Agregar" para guardar el autor
+6. Edita o elimina autores personalizados usando los botones en las tarjetas
+7. Los autores personalizados aparecen en la categoría "Mis Autores Favoritos"
 
 ## Comandos de Desarrollo
 
