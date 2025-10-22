@@ -65,11 +65,13 @@ Comprehensive RESTful API for authentication, book management, wishlist operatio
 - **Status**: ✅ Live and operational
 - **Database**: PostgreSQL production database on Replit
 
-### VPS Deployment (Learning Resource)
+### VPS Deployment
 - **Server**: Hostinger KVM 1, Ubuntu 24.04, IP: 72.60.115.169
-- **Intended Domain**: bibliotecamoi.com
-- **Status**: Prepared for deployment
-- **Purpose**: Educational resource for future enterprise projects
+- **Domain**: bibliotecamoi.com
+- **URL**: https://bibliotecamoi.com (HTTPS active)
+- **Status**: ✅ Live and operational with SSL certificate
+- **Database**: PostgreSQL local (biblioteca_moi database)
+- **Purpose**: Educational resource for future enterprise projects and production-ready alternative deployment
 
 ### Deployment Lessons Learned
 
@@ -84,6 +86,10 @@ Comprehensive RESTful API for authentication, book management, wishlist operatio
 4. **Error Handling**: Improved server startup error handling with try-catch blocks and proper logging to identify initialization failures.
 
 5. **Database Initialization**: Created `init-database.sql` to properly initialize users with correct password hashes in production environments.
+
+6. **502 Bad Gateway Resolution**: When PM2 shows app as "online" but Nginx returns 502, verify that all production dependencies (including devDependencies like Vite) are installed with `npm install` (not `--production` flag), as the compiled app may need these packages at runtime.
+
+7. **SSL Certificate Configuration**: Let's Encrypt SSL certificates successfully configured on VPS for HTTPS access. The application is now accessible via https://bibliotecamoi.com with automatic HTTP to HTTPS redirection.
 
 **Key Files for Deployment:**
 - `deploy-vps.sh`: Automated VPS deployment script
