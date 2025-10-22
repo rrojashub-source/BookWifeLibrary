@@ -1,7 +1,7 @@
-# Mi Biblioteca Personal
+# Biblioteca Moi
 
 ## Descripción General
-Aplicación web de gestión de biblioteca personal diseñada específicamente para llevar un control detallado de una colección de libros, progreso de lectura, y estadísticas tanto mensuales como anuales. La aplicación está optimizada para uso en iPhone, tablet y escritorio.
+Aplicación web de gestión de biblioteca personal diseñada específicamente para llevar un control detallado de una colección de libros católicos y espirituales, progreso de lectura, y estadísticas tanto mensuales como anuales. La aplicación está optimizada para uso en iPhone, tablet y escritorio con un diseño elegante en turquesa y blanco.
 
 ## Características Principales
 
@@ -69,10 +69,12 @@ Tabla `books`:
 ## Diseño Visual
 
 ### Tema
-- Paleta de colores cálidos inspirada en bibliotecas clásicas
-- Tonos marrones y ámbar (#3d2817 principal)
+- Paleta de colores elegante: Turquesa (#2ba09f) con blanco
+- Diseño sofisticado y calmado, perfecto para lectura espiritual
 - Soporte completo para modo oscuro/claro
 - Tipografía: Playfair Display (serif) + Inter (sans-serif)
+- Dedicatoria personal en el sidebar
+- Imagen de la Virgen María Reina de la Paz (Medjugorje)
 
 ### Responsive Design
 - Mobile-first approach

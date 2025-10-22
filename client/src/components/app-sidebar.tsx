@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+import virgenMariaImage from "@assets/estampa-gospa-maría reina de la paz_1761093317820.jpg";
 
 const menuItems = [
   {
@@ -42,10 +43,25 @@ export function AppSidebar() {
             <p className="text-xs text-muted-foreground">Colección Personal</p>
           </div>
         </div>
+        
         <div className="mt-4 p-3 rounded-md bg-primary/10 border border-primary/20">
           <p className="text-xs italic text-muted-foreground leading-relaxed">
             Esto fue creado para mi lectora favorita.<br />
             Te amo con todo mi corazón mi flaca preciosa.
+          </p>
+        </div>
+
+        <div className="mt-4 flex flex-col items-center" data-testid="container-virgen-maria">
+          <div className="w-32 h-auto rounded-lg overflow-hidden border-2 border-primary/30 shadow-md">
+            <img 
+              src={virgenMariaImage} 
+              alt="María Reina de la Paz - Medjugorje" 
+              className="w-full h-auto"
+              data-testid="image-virgen-maria"
+            />
+          </div>
+          <p className="mt-2 text-xs font-serif text-center text-muted-foreground" data-testid="text-virgen-maria">
+            María Reina de la Paz
           </p>
         </div>
       </SidebarHeader>
