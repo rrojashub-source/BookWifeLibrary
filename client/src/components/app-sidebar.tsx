@@ -38,9 +38,15 @@ export function AppSidebar() {
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="font-serif text-xl font-bold text-sidebar-foreground">Mi Biblioteca</h1>
+            <h1 className="font-serif text-xl font-bold text-sidebar-foreground">Biblioteca Moi</h1>
             <p className="text-xs text-muted-foreground">Colección Personal</p>
           </div>
+        </div>
+        <div className="mt-4 p-3 rounded-md bg-primary/10 border border-primary/20">
+          <p className="text-xs italic text-muted-foreground leading-relaxed">
+            Esto fue creado para mi lectora favorita.<br />
+            Te amo con todo mi corazón mi flaca preciosa.
+          </p>
         </div>
       </SidebarHeader>
       <SidebarContent>
