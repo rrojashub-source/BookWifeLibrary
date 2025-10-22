@@ -42,39 +42,73 @@ export function BarcodeScanner({ open, onOpenChange, onScanSuccess }: BarcodeSca
           description: "No se encontró ninguna cámara disponible",
           variant: "destructive",
         });
+        setIsScanning(false);
+        onOpenChange(false);
         return;
       }
 
-      // Prefer back camera on mobile devices
-      const backCamera = videoInputDevices.find(device => 
-        device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('trasera') ||
-        device.label.toLowerCase().includes('environment')
-      );
-
-      const selectedDeviceId = backCamera?.deviceId || videoInputDevices[0].deviceId;
-
-      // Start decoding from video device
-      codeReader.decodeFromVideoDevice(
-        selectedDeviceId,
-        videoRef.current!,
-        (result, error) => {
-          if (result) {
-            const code = result.getText();
-            // Validate that it looks like an ISBN (10 or 13 digits)
-            if (/^\d{10,13}$/.test(code)) {
-              onScanSuccess(code);
-              stopScanning();
-              onOpenChange(false);
-              toast({
-                title: "✅ Código Escaneado",
-                description: `ISBN: ${code}`,
-              });
+      // Try to use rear camera via constraints (works better on iOS)
+      try {
+        // Use constraints to request rear camera
+        await codeReader.decodeFromConstraints(
+          { 
+            video: { 
+              facingMode: 'environment' // Request rear camera
+            } 
+          },
+          videoRef.current!,
+          (result, error) => {
+            if (result) {
+              const code = result.getText();
+              // Validate that it looks like an ISBN (10 or 13 digits)
+              if (/^\d{10,13}$/.test(code)) {
+                onScanSuccess(code);
+                stopScanning();
+                onOpenChange(false);
+                toast({
+                  title: "✅ Código Escaneado",
+                  description: `ISBN: ${code}`,
+                });
+              }
             }
+            // Ignore errors - they happen constantly while scanning
           }
-          // Ignore errors - they happen constantly while scanning
-        }
-      );
+        );
+      } catch (constraintError) {
+        // Fallback to device selection if constraints fail
+        console.warn("Constraints failed, trying device selection:", constraintError);
+        
+        // Prefer back camera on mobile devices
+        const backCamera = videoInputDevices.find(device => 
+          device.label.toLowerCase().includes('back') || 
+          device.label.toLowerCase().includes('trasera') ||
+          device.label.toLowerCase().includes('environment')
+        );
+
+        const selectedDeviceId = backCamera?.deviceId || videoInputDevices[0].deviceId;
+
+        // Start decoding from video device
+        codeReader.decodeFromVideoDevice(
+          selectedDeviceId,
+          videoRef.current!,
+          (result, error) => {
+            if (result) {
+              const code = result.getText();
+              // Validate that it looks like an ISBN (10 or 13 digits)
+              if (/^\d{10,13}$/.test(code)) {
+                onScanSuccess(code);
+                stopScanning();
+                onOpenChange(false);
+                toast({
+                  title: "✅ Código Escaneado",
+                  description: `ISBN: ${code}`,
+                });
+              }
+            }
+            // Ignore errors - they happen constantly while scanning
+          }
+        );
+      }
     } catch (error) {
       console.error("Error starting camera:", error);
       toast({
@@ -83,6 +117,7 @@ export function BarcodeScanner({ open, onOpenChange, onScanSuccess }: BarcodeSca
         variant: "destructive",
       });
       setIsScanning(false);
+      onOpenChange(false);
     }
   };
 
