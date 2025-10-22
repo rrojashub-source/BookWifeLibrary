@@ -7,6 +7,10 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 
 ### Gestión de Libros
 - **Catálogo completo** con vista en tarjetas elegantes
+- **Escaneo de códigos de barras** con cámara para captura automática de ISBN
+  - Usa librería @zxing/library para detección de ISBN-10 e ISBN-13
+  - Optimizado para iOS Safari con cámara trasera
+  - Búsqueda automática de datos del libro después del escaneo
 - **Búsqueda automática por ISBN** usando Open Library API
 - **Entrada manual** de todos los datos del libro
 - **Portadas de libros** con soporte para URLs personalizadas
@@ -141,26 +145,37 @@ Tabla `dictionary_entries`:
 - ✅ **Branding Personalizado** - "Biblioteca Moi" con dedicatoria romántica
 - ✅ **Iconografía Religiosa** - Imagen de la Virgen María Reina de la Paz
 - ✅ CRUD completo de libros
+- ✅ **Escaneo de Códigos de Barras** - Captura de ISBN con cámara (optimizado para iOS Safari)
 - ✅ Búsqueda por ISBN con Open Library API
 - ✅ Dashboard de estadísticas con gráficos
 - ✅ Filtros avanzados
 - ✅ Sistema de calificación y reseñas
-- ✅ **Diccionario Personal** - Registro de palabras con búsqueda automática de definiciones (Spanish Dictionary API)
+- ✅ **Diccionario Personal** - Registro manual de palabras con definiciones personalizadas
 - ✅ **Lista de Deseos** - Gestión de wishlist con mover libros entre wishlist y biblioteca
 - ✅ Diseño responsive
 - ✅ Modo oscuro/claro
 - ✅ Base de datos PostgreSQL
 
 ### Próximas Características
-- 📷 Escaneo de códigos de barras con cámara
 - 📚 Sistema de préstamos
 - 🎯 Metas de lectura anuales
 - 📊 Exportación en PDF/CSV
 - 🔄 Modo offline con sincronización
+- 📖 Enlaces a autores católicos destacados
+- 💡 Sistema de recomendaciones
 
 ## Cómo Usar
 
-### Agregar un Libro
+### Agregar un Libro con Escaneo de Código de Barras
+1. Click en "Agregar Libro"
+2. Presiona el botón "Escanear" junto al campo ISBN
+3. Permite el acceso a la cámara cuando se solicite
+4. Apunta la cámara trasera al código de barras del libro
+5. El ISBN se capturará automáticamente y se buscarán los datos del libro
+6. Completa o ajusta la información adicional
+7. Guarda el libro
+
+### Agregar un Libro Manualmente
 1. Click en "Agregar Libro"
 2. Ingresa el ISBN y presiona "Buscar" (opcional)
 3. Completa o ajusta la información
