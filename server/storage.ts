@@ -1,5 +1,9 @@
 // Reference: javascript_database blueprint (modified for books)
-import { books, type Book, type InsertBook, users, type User, type InsertUser } from "@shared/schema";
+import { 
+  books, type Book, type InsertBook, 
+  users, type User, type InsertUser,
+  dictionaryEntries, type DictionaryEntry, type InsertDictionaryEntry 
+} from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import session from "express-session";
@@ -20,6 +24,13 @@ export interface IStorage {
   createBook(book: InsertBook): Promise<Book>;
   updateBook(id: string, book: InsertBook): Promise<Book | undefined>;
   deleteBook(id: string): Promise<boolean>;
+  
+  // Dictionary CRUD operations
+  getAllDictionaryEntries(): Promise<DictionaryEntry[]>;
+  getDictionaryEntry(id: string): Promise<DictionaryEntry | undefined>;
+  createDictionaryEntry(entry: InsertDictionaryEntry): Promise<DictionaryEntry>;
+  updateDictionaryEntry(id: string, entry: InsertDictionaryEntry): Promise<DictionaryEntry | undefined>;
+  deleteDictionaryEntry(id: string): Promise<boolean>;
   
   // Statistics
   getMonthlyStats(year: number): Promise<any[]>;
@@ -87,6 +98,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBook(id: string): Promise<boolean> {
     const result = await db.delete(books).where(eq(books.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // Dictionary methods
+  async getAllDictionaryEntries(): Promise<DictionaryEntry[]> {
+    return await db.select().from(dictionaryEntries).orderBy(dictionaryEntries.dateAdded);
+  }
+
+  async getDictionaryEntry(id: string): Promise<DictionaryEntry | undefined> {
+    const [entry] = await db.select().from(dictionaryEntries).where(eq(dictionaryEntries.id, id));
+    return entry || undefined;
+  }
+
+  async createDictionaryEntry(insertEntry: InsertDictionaryEntry): Promise<DictionaryEntry> {
+    const [entry] = await db
+      .insert(dictionaryEntries)
+      .values(insertEntry)
+      .returning();
+    return entry;
+  }
+
+  async updateDictionaryEntry(id: string, insertEntry: InsertDictionaryEntry): Promise<DictionaryEntry | undefined> {
+    const [entry] = await db
+      .update(dictionaryEntries)
+      .set(insertEntry)
+      .where(eq(dictionaryEntries.id, id))
+      .returning();
+    return entry || undefined;
+  }
+
+  async deleteDictionaryEntry(id: string): Promise<boolean> {
+    const result = await db.delete(dictionaryEntries).where(eq(dictionaryEntries.id, id));
     return result.rowCount !== null && result.rowCount > 0;
   }
 

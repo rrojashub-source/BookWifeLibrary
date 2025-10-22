@@ -28,6 +28,14 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 - Filtro por género
 - Interfaz responsive optimizada para móvil
 
+### Diccionario Personal
+- **Registro de palabras** encontradas durante la lectura
+- **Búsqueda automática** de definiciones usando Spanish Dictionary API
+- **Asociación opcional** con libros de la biblioteca
+- **Notas personales** para contexto adicional
+- CRUD completo: crear, editar y eliminar entradas
+- Vista en tarjetas elegantes con iconografía
+
 ## Arquitectura Técnica
 
 ### Frontend
@@ -46,6 +54,12 @@ Aplicación web de gestión de biblioteca personal diseñada específicamente pa
 - **Zod** para validación de schemas
 
 ### Base de Datos
+Tabla `users`:
+- id (serial)
+- username (unique)
+- password (hashed with scrypt)
+- createdAt
+
 Tabla `books`:
 - id (UUID)
 - title, author, isbn
@@ -54,7 +68,20 @@ Tabla `books`:
 - rating (1-5), review
 - startDate, finishDate, dateAdded
 
+Tabla `dictionary_entries`:
+- id (UUID)
+- word, definition, notes
+- bookId (foreign key a books, opcional, set null on delete)
+- userId (foreign key a users)
+- createdAt
+
 ## API Endpoints
+
+### Autenticación
+- `POST /api/register` - Registrar nuevo usuario (validación Zod, contraseña hasheada)
+- `POST /api/login` - Iniciar sesión (validación Zod, cookies seguras)
+- `POST /api/logout` - Cerrar sesión
+- `GET /api/user` - Obtener usuario actual (requiere autenticación)
 
 ### Libros
 - `GET /api/books` - Obtener todos los libros
@@ -65,6 +92,13 @@ Tabla `books`:
 
 ### Estadísticas
 - `GET /api/stats` - Dashboard con estadísticas completas
+
+### Diccionario
+- `GET /api/dictionary` - Obtener todas las entradas del diccionario
+- `GET /api/dictionary/:id` - Obtener una entrada específica
+- `POST /api/dictionary` - Crear nueva entrada
+- `PATCH /api/dictionary/:id` - Actualizar entrada
+- `DELETE /api/dictionary/:id` - Eliminar entrada
 
 ## Diseño Visual
 
@@ -87,11 +121,17 @@ Tabla `books`:
 **Última actualización**: Octubre 2025
 
 ### Características Implementadas ✅
+- ✅ **Autenticación Privada** - Login con usuario/contraseña (Passport.js + scrypt hashing)
+- ✅ **Sesiones Seguras** - PostgreSQL session store + cookies httpOnly
+- ✅ **Diseño Turquesa Elegante** - Paleta turquesa/blanco optimizada para contenido espiritual
+- ✅ **Branding Personalizado** - "Biblioteca Moi" con dedicatoria romántica
+- ✅ **Iconografía Religiosa** - Imagen de la Virgen María Reina de la Paz
 - ✅ CRUD completo de libros
 - ✅ Búsqueda por ISBN con Open Library API
 - ✅ Dashboard de estadísticas con gráficos
 - ✅ Filtros avanzados
 - ✅ Sistema de calificación y reseñas
+- ✅ **Diccionario Personal** - Registro de palabras con búsqueda automática de definiciones (Spanish Dictionary API)
 - ✅ Diseño responsive
 - ✅ Modo oscuro/claro
 - ✅ Base de datos PostgreSQL

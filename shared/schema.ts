@@ -59,6 +59,29 @@ export const insertBookSchema = createInsertSchema(books, {
 export type InsertBook = z.infer<typeof insertBookSchema>;
 export type Book = typeof books.$inferSelect;
 
+// Dictionary entries table
+export const dictionaryEntries = pgTable("dictionary_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  word: text("word").notNull(),
+  definition: text("definition").notNull(),
+  bookId: varchar("book_id").references(() => books.id, { onDelete: "set null" }),
+  notes: text("notes"),
+  dateAdded: timestamp("date_added").notNull().defaultNow(),
+});
+
+export const insertDictionaryEntrySchema = createInsertSchema(dictionaryEntries, {
+  word: z.string().min(1, "La palabra es requerida"),
+  definition: z.string().min(1, "La definición es requerida"),
+  bookId: z.string().optional().or(z.literal("")),
+  notes: z.string().optional(),
+}).omit({
+  id: true,
+  dateAdded: true,
+});
+
+export type InsertDictionaryEntry = z.infer<typeof insertDictionaryEntrySchema>;
+export type DictionaryEntry = typeof dictionaryEntries.$inferSelect;
+
 // Statistics types for frontend
 export interface MonthlyStats {
   month: string; // YYYY-MM format

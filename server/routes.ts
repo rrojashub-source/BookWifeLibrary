@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBookSchema } from "@shared/schema";
+import { insertBookSchema, insertDictionaryEntrySchema } from "@shared/schema";
 import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -77,6 +77,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting book:", error);
       res.status(500).json({ error: "Failed to delete book" });
+    }
+  });
+
+  // Dictionary endpoints
+  // Get all dictionary entries
+  app.get("/api/dictionary", async (req, res) => {
+    try {
+      const entries = await storage.getAllDictionaryEntries();
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching dictionary entries:", error);
+      res.status(500).json({ error: "Failed to fetch dictionary entries" });
+    }
+  });
+
+  // Get single dictionary entry
+  app.get("/api/dictionary/:id", async (req, res) => {
+    try {
+      const entry = await storage.getDictionaryEntry(req.params.id);
+      if (!entry) {
+        return res.status(404).json({ error: "Dictionary entry not found" });
+      }
+      res.json(entry);
+    } catch (error) {
+      console.error("Error fetching dictionary entry:", error);
+      res.status(500).json({ error: "Failed to fetch dictionary entry" });
+    }
+  });
+
+  // Create new dictionary entry
+  app.post("/api/dictionary", async (req, res) => {
+    try {
+      const validatedData = insertDictionaryEntrySchema.parse(req.body);
+      // Convert empty string bookId to null for database foreign key
+      const entryData = {
+        ...validatedData,
+        bookId: validatedData.bookId && validatedData.bookId !== "" ? validatedData.bookId : null,
+      };
+      const entry = await storage.createDictionaryEntry(entryData);
+      res.status(201).json(entry);
+    } catch (error: any) {
+      console.error("Error creating dictionary entry:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid dictionary entry data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create dictionary entry" });
+    }
+  });
+
+  // Update dictionary entry
+  app.patch("/api/dictionary/:id", async (req, res) => {
+    try {
+      const validatedData = insertDictionaryEntrySchema.parse(req.body);
+      // Convert empty string bookId to null for database foreign key
+      const entryData = {
+        ...validatedData,
+        bookId: validatedData.bookId && validatedData.bookId !== "" ? validatedData.bookId : null,
+      };
+      const entry = await storage.updateDictionaryEntry(req.params.id, entryData);
+      if (!entry) {
+        return res.status(404).json({ error: "Dictionary entry not found" });
+      }
+      res.json(entry);
+    } catch (error: any) {
+      console.error("Error updating dictionary entry:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ error: "Invalid dictionary entry data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update dictionary entry" });
+    }
+  });
+
+  // Delete dictionary entry
+  app.delete("/api/dictionary/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteDictionaryEntry(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Dictionary entry not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting dictionary entry:", error);
+      res.status(500).json({ error: "Failed to delete dictionary entry" });
     }
   });
 

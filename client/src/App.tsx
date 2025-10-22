@@ -11,6 +11,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import Library from "@/pages/library";
 import Dashboard from "@/pages/dashboard";
+import DictionaryPage from "@/pages/dictionary-page";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 
@@ -44,6 +45,7 @@ function AppContent() {
             <Switch>
               <ProtectedRoute path="/" component={Library} />
               <ProtectedRoute path="/dashboard" component={Dashboard} />
+              <ProtectedRoute path="/dictionary" component={DictionaryPage} />
               <Route component={NotFound} />
             </Switch>
           </main>
