@@ -1,9 +1,19 @@
 // Reference: javascript_database blueprint (modified for books)
-import { books, type Book, type InsertBook } from "@shared/schema";
+import { books, type Book, type InsertBook, users, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
+
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
+  // User authentication
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  
   // Book CRUD operations
   getAllBooks(): Promise<Book[]>;
   getBook(id: string): Promise<Book | undefined>;
@@ -14,9 +24,41 @@ export interface IStorage {
   // Statistics
   getMonthlyStats(year: number): Promise<any[]>;
   getYearlyStats(year: number): Promise<any>;
+  
+  // Session store
+  sessionStore: session.Store;
 }
 
 export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  // Book methods
   async getAllBooks(): Promise<Book[]> {
     return await db.select().from(books).orderBy(books.dateAdded);
   }

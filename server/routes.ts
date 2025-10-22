@@ -2,8 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookSchema } from "@shared/schema";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication (creates /api/register, /api/login, /api/logout, /api/user)
+  setupAuth(app);
+
   // Get all books
   app.get("/api/books", async (req, res) => {
     try {
