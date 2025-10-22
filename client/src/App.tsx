@@ -14,6 +14,7 @@ import Library from "@/pages/library";
 import Dashboard from "@/pages/dashboard";
 import DictionaryPage from "@/pages/dictionary-page";
 import WishlistPage from "@/pages/wishlist-page";
+import GoalsPage from "@/pages/goals-page";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 
@@ -52,6 +53,7 @@ function AppContent() {
               <ProtectedRoute path="/wishlist" component={WishlistPage} />
               <ProtectedRoute path="/dashboard" component={Dashboard} />
               <ProtectedRoute path="/dictionary" component={DictionaryPage} />
+              <ProtectedRoute path="/goals" component={GoalsPage} />
               <Route component={NotFound} />
             </Switch>
           </main>
