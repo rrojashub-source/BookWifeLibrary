@@ -121,8 +121,8 @@ Tabla `dictionary_entries`:
 **Última actualización**: Octubre 2025
 
 ### Características Implementadas ✅
-- ✅ **Autenticación Privada** - Login con usuario/contraseña (Passport.js + scrypt hashing)
-- ✅ **Sesiones Seguras** - PostgreSQL session store + cookies httpOnly
+- ✅ **Autenticación Privada** - Solo login (registro público deshabilitado por seguridad)
+- ✅ **Sesiones Seguras** - PostgreSQL session store + cookies httpOnly + Passport.js
 - ✅ **Diseño Turquesa Elegante** - Paleta turquesa/blanco optimizada para contenido espiritual
 - ✅ **Branding Personalizado** - "Biblioteca Moi" con dedicatoria romántica
 - ✅ **Iconografía Religiosa** - Imagen de la Virgen María Reina de la Paz

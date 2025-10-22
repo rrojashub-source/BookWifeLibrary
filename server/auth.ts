@@ -94,7 +94,14 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Registration disabled - this is a private application
   app.post("/api/register", async (req, res, next) => {
+    return res.status(403).json({ 
+      error: "Registro deshabilitado", 
+      message: "Esta es una aplicación privada. El registro público está deshabilitado."
+    });
+    
+    /* ORIGINAL REGISTRATION CODE - DISABLED FOR SECURITY
     try {
       // Validate input
       const validation = insertUserSchema.safeParse(req.body);
@@ -126,6 +133,7 @@ export function setupAuth(app: Express) {
     } catch (error) {
       next(error);
     }
+    */
   });
 
   app.post("/api/login", (req, res, next) => {
