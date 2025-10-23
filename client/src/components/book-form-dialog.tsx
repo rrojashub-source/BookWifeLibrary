@@ -51,6 +51,8 @@ export function BookFormDialog({
 }: BookFormDialogProps) {
   const { toast } = useToast();
   const [isSearching, setIsSearching] = useState(false);
+  const [searchProgress, setSearchProgress] = useState(0);
+  const [searchStatus, setSearchStatus] = useState("");
 
   const form = useForm<InsertBook>({
     resolver: zodResolver(insertBookSchema),
@@ -62,6 +64,13 @@ export function BookFormDialog({
           pages: book.pages || undefined,
           coverUrl: book.coverUrl || "",
           genre: book.genre || "",
+          language: book.language || "",
+          edition: book.edition || "",
+          synopsis: book.synopsis || "",
+          series: book.series || "",
+          seriesNumber: book.seriesNumber || undefined,
+          publisher: book.publisher || "",
+          publishedDate: book.publishedDate || "",
           status: book.status as "por_leer" | "leyendo" | "terminado",
           rating: book.rating || undefined,
           review: book.review || "",
@@ -79,8 +88,8 @@ export function BookFormDialog({
   });
 
   const searchByISBN = async () => {
-    const isbn = form.getValues("isbn");
-    if (!isbn) {
+    const rawIsbn = form.getValues("isbn");
+    if (!rawIsbn) {
       toast({
         title: "ISBN requerido",
         description: "Por favor ingresa un ISBN para buscar",
@@ -89,16 +98,80 @@ export function BookFormDialog({
       return;
     }
 
-    setIsSearching(true);
+    // Normalizar ISBN
+    setSearchProgress(5);
+    setSearchStatus("Normalizando ISBN...");
+    const normalizedIsbn = normalizeISBN(rawIsbn);
     
-    // Limpiar campos antes de buscar para evitar datos mezclados
+    // Validar ISBN
+    const validation = validateISBN(normalizedIsbn);
+    if (!validation.valid) {
+      toast({
+        title: "ISBN inválido",
+        description: validation.error || "El ISBN ingresado no es válido. Verifica el número e intenta nuevamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Actualizar el campo con el ISBN normalizado
+    form.setValue("isbn", formatISBN(normalizedIsbn));
+    
+    setIsSearching(true);
+    setSearchProgress(10);
+    
+    // Limpiar todos los campos antes de buscar
     form.setValue("title", "");
     form.setValue("author", "");
     form.setValue("pages", undefined);
     form.setValue("coverUrl", "");
     form.setValue("genre", "");
+    form.setValue("language", "");
+    form.setValue("edition", "");
+    form.setValue("synopsis", "");
+    form.setValue("series", "");
+    form.setValue("seriesNumber", undefined);
+    form.setValue("publisher", "");
+    form.setValue("publishedDate", "");
     
     try {
+      // Paso 1: Verificar cache
+      setSearchStatus("Verificando cache...");
+      setSearchProgress(15);
+      
+      const cacheResponse = await fetch(`/api/books/isbn-cache/${normalizedIsbn}`);
+      if (cacheResponse.ok) {
+        const cachedData = await cacheResponse.json();
+        if (cachedData) {
+          setSearchProgress(90);
+          setSearchStatus("Datos encontrados en cache");
+          
+          // Cargar datos del cache
+          if (cachedData.title) form.setValue("title", cachedData.title);
+          if (cachedData.author) form.setValue("author", cachedData.author);
+          if (cachedData.pages) form.setValue("pages", cachedData.pages);
+          if (cachedData.coverUrl) form.setValue("coverUrl", cachedData.coverUrl);
+          if (cachedData.genre) form.setValue("genre", cachedData.genre);
+          if (cachedData.language) form.setValue("language", cachedData.language);
+          if (cachedData.edition) form.setValue("edition", cachedData.edition);
+          if (cachedData.synopsis) form.setValue("synopsis", cachedData.synopsis);
+          if (cachedData.series) form.setValue("series", cachedData.series);
+          if (cachedData.seriesNumber) form.setValue("seriesNumber", cachedData.seriesNumber);
+          if (cachedData.publisher) form.setValue("publisher", cachedData.publisher);
+          if (cachedData.publishedDate) form.setValue("publishedDate", cachedData.publishedDate);
+          
+          setSearchProgress(100);
+          toast({
+            title: "✅ Libro encontrado (cache)",
+            description: `Datos previos de: ${cachedData.sources}`,
+            duration: 4000,
+          });
+          
+          setIsSearching(false);
+          return;
+        }
+      }
+      
       // Objeto para combinar información de todas las fuentes
       const combinedData: {
         title?: string;
@@ -106,37 +179,52 @@ export function BookFormDialog({
         pages?: number;
         coverUrl?: string;
         genre?: string;
+        language?: string;
+        edition?: string;
+        synopsis?: string;
+        series?: string;
+        seriesNumber?: number;
+        publisher?: string;
+        publishedDate?: string;
         sources: string[];
       } = { sources: [] };
 
       // Intento 1: Open Library
+      setSearchStatus("Consultando Open Library...");
+      setSearchProgress(30);
       try {
         const openLibraryResponse = await fetch(
-          `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`
+          `https://openlibrary.org/api/books?bibkeys=ISBN:${normalizedIsbn}&format=json&jscmd=data`
         );
         const openLibraryData = await openLibraryResponse.json();
-        const bookData = openLibraryData[`ISBN:${isbn}`];
+        const bookData = openLibraryData[`ISBN:${normalizedIsbn}`];
 
         if (bookData) {
           combinedData.sources.push("Open Library");
           if (bookData.title) combinedData.title = bookData.title;
           if (bookData.authors && bookData.authors.length > 0) {
-            combinedData.author = bookData.authors[0].name;
+            combinedData.author = bookData.authors.map((a: any) => a.name).join(", ");
           }
           if (bookData.number_of_pages) combinedData.pages = bookData.number_of_pages;
           if (bookData.cover?.large) combinedData.coverUrl = bookData.cover.large;
           if (bookData.subjects && bookData.subjects.length > 0) {
             combinedData.genre = bookData.subjects[0].name;
           }
+          if (bookData.publishers && bookData.publishers.length > 0) {
+            combinedData.publisher = bookData.publishers[0].name;
+          }
+          if (bookData.publish_date) combinedData.publishedDate = bookData.publish_date;
         }
       } catch (error) {
         console.log("Open Library no disponible");
       }
 
       // Intento 2: Google Books API
+      setSearchStatus("Consultando Google Books...");
+      setSearchProgress(50);
       try {
         const googleBooksResponse = await fetch(
-          `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+          `https://www.googleapis.com/books/v1/volumes?q=isbn:${normalizedIsbn}`
         );
         const googleBooksData = await googleBooksResponse.json();
 
@@ -159,14 +247,28 @@ export function BookFormDialog({
           if (!combinedData.genre && volumeInfo.categories && volumeInfo.categories.length > 0) {
             combinedData.genre = volumeInfo.categories[0];
           }
+          if (!combinedData.language && volumeInfo.language) {
+            combinedData.language = volumeInfo.language === 'es' ? 'Español' : volumeInfo.language === 'en' ? 'Inglés' : volumeInfo.language;
+          }
+          if (!combinedData.synopsis && volumeInfo.description) {
+            combinedData.synopsis = volumeInfo.description;
+          }
+          if (!combinedData.publisher && volumeInfo.publisher) {
+            combinedData.publisher = volumeInfo.publisher;
+          }
+          if (!combinedData.publishedDate && volumeInfo.publishedDate) {
+            combinedData.publishedDate = volumeInfo.publishedDate;
+          }
         }
       } catch (error) {
         console.log("Google Books no disponible");
       }
 
       // Intento 3: Firecrawl (Amazon scraping)
+      setSearchStatus("Consultando Amazon (Firecrawl)...");
+      setSearchProgress(70);
       try {
-        const firecrawlResponse = await fetch(`/api/books/search-isbn/${isbn}`);
+        const firecrawlResponse = await fetch(`/api/books/search-isbn/${normalizedIsbn}`);
         const firecrawlData = await firecrawlResponse.json();
 
         if (firecrawlResponse.ok && firecrawlData.title) {
@@ -185,6 +287,12 @@ export function BookFormDialog({
           if (!combinedData.genre && firecrawlData.genre) {
             combinedData.genre = firecrawlData.genre;
           }
+          if (!combinedData.publisher && firecrawlData.publisher) {
+            combinedData.publisher = firecrawlData.publisher;
+          }
+          if (!combinedData.synopsis && firecrawlData.synopsis) {
+            combinedData.synopsis = firecrawlData.synopsis;
+          }
         }
       } catch (error) {
         console.log("Firecrawl no disponible");
@@ -192,6 +300,7 @@ export function BookFormDialog({
 
       // Verificar si encontramos algo
       if (combinedData.sources.length === 0) {
+        setSearchProgress(100);
         toast({
           title: "No encontrado",
           description: "No se encontró información para este ISBN en ninguna fuente. Puedes completar los datos manualmente.",
@@ -200,31 +309,68 @@ export function BookFormDialog({
         return;
       }
 
+      // Validar imagen de portada
+      setSearchStatus("Verificando calidad de portada...");
+      setSearchProgress(85);
+      if (combinedData.coverUrl) {
+        const isValidImage = await validateImageUrl(combinedData.coverUrl);
+        if (!isValidImage) {
+          combinedData.coverUrl = undefined;
+        }
+      }
+
       // Cargar los datos combinados en el formulario
       if (combinedData.title) form.setValue("title", combinedData.title);
       if (combinedData.author) form.setValue("author", combinedData.author);
       if (combinedData.pages) form.setValue("pages", combinedData.pages);
       if (combinedData.coverUrl) form.setValue("coverUrl", combinedData.coverUrl);
       if (combinedData.genre) form.setValue("genre", combinedData.genre);
+      if (combinedData.language) form.setValue("language", combinedData.language);
+      if (combinedData.edition) form.setValue("edition", combinedData.edition);
+      if (combinedData.synopsis) form.setValue("synopsis", combinedData.synopsis);
+      if (combinedData.series) form.setValue("series", combinedData.series);
+      if (combinedData.seriesNumber) form.setValue("seriesNumber", combinedData.seriesNumber);
+      if (combinedData.publisher) form.setValue("publisher", combinedData.publisher);
+      if (combinedData.publishedDate) form.setValue("publishedDate", combinedData.publishedDate);
+
+      // Guardar en cache
+      setSearchStatus("Guardando en cache...");
+      setSearchProgress(95);
+      try {
+        await fetch('/api/books/isbn-cache', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            isbn: normalizedIsbn,
+            ...combinedData,
+            sources: combinedData.sources.join(", "),
+          }),
+        });
+      } catch (error) {
+        console.log("No se pudo guardar en cache");
+      }
 
       // Mensaje de éxito con fuentes utilizadas
+      setSearchProgress(100);
+      setSearchStatus("Completado");
       const hasCover = combinedData.coverUrl && combinedData.coverUrl.trim() !== "";
       const sourcesText = combinedData.sources.join(", ");
       
       if (hasCover) {
         toast({
-          title: "Libro encontrado",
+          title: "✅ Libro encontrado",
           description: `Datos combinados de: ${sourcesText}`,
           duration: 5000,
         });
       } else {
         toast({
-          title: "Libro encontrado (portada faltante)",
+          title: "⚠️ Libro encontrado (portada faltante)",
           description: `Datos de: ${sourcesText}. Para la portada: busca el libro en Amazon, clic derecho en la imagen → 'Copiar dirección de imagen' → pégala en 'URL de Portada'`,
           duration: 8000,
         });
       }
     } catch (error) {
+      setSearchProgress(100);
       toast({
         title: "Error",
         description: "No se pudo buscar el libro. Verifica el ISBN",
@@ -232,6 +378,10 @@ export function BookFormDialog({
       });
     } finally {
       setIsSearching(false);
+      setTimeout(() => {
+        setSearchProgress(0);
+        setSearchStatus("");
+      }, 2000);
     }
   };
 
@@ -290,6 +440,16 @@ export function BookFormDialog({
                   </FormItem>
                 )}
               />
+
+              {isSearching && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>{searchStatus || "Buscando..."}</span>
+                  </div>
+                  <Progress value={searchProgress} className="h-2" data-testid="progress-search" />
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -410,6 +570,150 @@ export function BookFormDialog({
                         placeholder="https://..."
                         {...field}
                         data-testid="input-cover-url"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="language"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Idioma</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Español"
+                          {...field}
+                          value={field.value || ""}
+                          data-testid="input-language"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="edition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Edición</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Primera edición"
+                          {...field}
+                          value={field.value || ""}
+                          data-testid="input-edition"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="publisher"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Editorial</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Editorial Planeta"
+                          {...field}
+                          value={field.value || ""}
+                          data-testid="input-publisher"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="publishedDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fecha de Publicación</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="2024"
+                          {...field}
+                          value={field.value || ""}
+                          data-testid="input-published-date"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="series"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Serie</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Crónica del Asesino de Reyes"
+                          {...field}
+                          value={field.value || ""}
+                          data-testid="input-series"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="seriesNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número en la Serie</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="1"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
+                          }
+                          value={field.value || ""}
+                          data-testid="input-series-number"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="synopsis"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sinopsis</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Resumen del libro..."
+                        className="resize-none min-h-24"
+                        {...field}
+                        value={field.value || ""}
+                        data-testid="textarea-synopsis"
                       />
                     </FormControl>
                     <FormMessage />

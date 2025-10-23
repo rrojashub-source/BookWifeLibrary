@@ -540,6 +540,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ISBN Cache endpoints
+  app.get("/api/books/isbn-cache/:isbn", async (req, res) => {
+    try {
+      const cached = await storage.getISBNCache(req.params.isbn);
+      if (cached) {
+        res.json(cached);
+      } else {
+        res.status(404).json({ error: "ISBN not in cache" });
+      }
+    } catch (error) {
+      console.error("Error fetching ISBN cache:", error);
+      res.status(500).json({ error: "Failed to fetch ISBN cache" });
+    }
+  });
+
+  app.post("/api/books/isbn-cache", async (req, res) => {
+    try {
+      const cacheData = req.body;
+      const cached = await storage.setISBNCache(cacheData);
+      res.status(201).json(cached);
+    } catch (error) {
+      console.error("Error setting ISBN cache:", error);
+      res.status(500).json({ error: "Failed to save ISBN cache" });
+    }
+  });
+
+  // Search History endpoints
+  app.get("/api/books/search-history", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      const history = await storage.getSearchHistory(userId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching search history:", error);
+      res.status(500).json({ error: "Failed to fetch search history" });
+    }
+  });
+
+  app.post("/api/books/search-history", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      const { isbn, title } = req.body;
+      const history = await storage.addSearchHistory(userId, isbn, title);
+      res.status(201).json(history);
+    } catch (error) {
+      console.error("Error adding search history:", error);
+      res.status(500).json({ error: "Failed to add search history" });
+    }
+  });
+
+  app.delete("/api/books/search-history", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    try {
+      const userId = req.user!.id;
+      await storage.clearSearchHistory(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error clearing search history:", error);
+      res.status(500).json({ error: "Failed to clear search history" });
+    }
+  });
+
   // Get recommendations based on reading habits
   app.get("/api/recommendations", async (req, res) => {
     try {

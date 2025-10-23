@@ -1,5 +1,45 @@
 # Biblioteca Moi
 
+## Recent Changes
+
+### October 23, 2025 - ISBN Search System Enhancement
+**Major Improvement**: Massively enhanced ISBN search with 12+ improvements:
+
+**Key Features Implemented:**
+1. **Automatic ISBN normalization** - Removes hyphens/spaces, converts ISBN-10 to ISBN-13
+2. **ISBN validation** - Validates format and checksum before searching  
+3. **Real-time progress indicators** - Shows which API is being queried with progress bar
+4. **Cover quality verification** - Validates image URLs work before accepting them
+5. **Intelligent cache system** - `isbn_cache` table stores successful lookups, cache-first strategy
+6. **Search history tracking** - `search_history` table tracks recent ISBN searches per user
+7. **Extended metadata enrichment** - Captures language, edition, synopsis, series, publisher, publish date
+8. **Combined 3-source search** - Merges best data from Open Library, Google Books, and Firecrawl
+9. **Auto-formatted ISBN display** - Shows ISBN in standard 978-X-XXX-XXXXX-X format
+10. **Visual progress feedback** - Progress bar with status messages during search
+11. **New database fields** - Added 7 new book fields (language, edition, synopsis, series, seriesNumber, publisher, publishedDate)
+
+**Technical Implementation:**
+- Created `client/src/lib/utils/isbn.ts` with normalization, validation, ISBN-10→13 conversion, checksum algorithms
+- Created `client/src/lib/utils/image-validator.ts` for async image URL validation
+- Added `isbnCache` and `searchHistory` tables to schema with proper indexes
+- Extended `books` table with 7 new metadata fields
+- Added cache/history storage methods and REST API endpoints (`GET/POST /api/books/isbn-cache`, etc.)
+- Completely rewrote `searchByISBN()` function with:
+  - Cache lookup first (instant results for repeated searches)
+  - Progressive status updates (5% → 15% → 30% → 50% → 70% → 85% → 95% → 100%)
+  - Parallel 3-API search with data merging
+  - Image validation before accepting cover URLs
+  - Automatic cache persistence after successful searches
+- Added `Progress` component and status display to book form dialog
+- All new form fields added with proper data-testid attributes for testing
+
+**User Impact:**
+- Instant results for previously searched ISBNs (cache hit)
+- Better data quality with enriched metadata from multiple sources
+- Clear visual feedback during search (no more black box waiting)
+- ISBN input auto-formats and validates before search
+- More complete book information (language, series, synopsis, etc.)
+
 ## Overview
 Biblioteca Moi is a web application designed for personal library management, focusing on Catholic and spiritual books. It enables users to track their collection, monitor reading progress, and view monthly and annual statistics. The application features a clean turquoise and white design, optimized for responsive use across iPhone, tablet, and desktop. Its core purpose is to provide a dedicated tool for spiritual reading management, offering features like ISBN scanning, reading goals, a personal dictionary, and curated author resources.
 
