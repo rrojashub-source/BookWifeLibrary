@@ -96,108 +96,131 @@ export function BookFormDialog({
     form.setValue("genre", "");
     
     try {
+      // Objeto para combinar información de todas las fuentes
+      const combinedData: {
+        title?: string;
+        author?: string;
+        pages?: number;
+        coverUrl?: string;
+        genre?: string;
+        sources: string[];
+      } = { sources: [] };
+
       // Intento 1: Open Library
-      const openLibraryResponse = await fetch(
-        `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`
-      );
-      const openLibraryData = await openLibraryResponse.json();
-      const bookData = openLibraryData[`ISBN:${isbn}`];
+      try {
+        const openLibraryResponse = await fetch(
+          `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`
+        );
+        const openLibraryData = await openLibraryResponse.json();
+        const bookData = openLibraryData[`ISBN:${isbn}`];
 
-      if (bookData) {
-        form.setValue("title", bookData.title || "");
-        if (bookData.authors && bookData.authors.length > 0) {
-          form.setValue("author", bookData.authors[0].name || "");
+        if (bookData) {
+          combinedData.sources.push("Open Library");
+          if (bookData.title) combinedData.title = bookData.title;
+          if (bookData.authors && bookData.authors.length > 0) {
+            combinedData.author = bookData.authors[0].name;
+          }
+          if (bookData.number_of_pages) combinedData.pages = bookData.number_of_pages;
+          if (bookData.cover?.large) combinedData.coverUrl = bookData.cover.large;
+          if (bookData.subjects && bookData.subjects.length > 0) {
+            combinedData.genre = bookData.subjects[0].name;
+          }
         }
-        if (bookData.number_of_pages) {
-          form.setValue("pages", bookData.number_of_pages);
-        }
-        if (bookData.cover && bookData.cover.large) {
-          form.setValue("coverUrl", bookData.cover.large);
-        }
-        if (bookData.subjects && bookData.subjects.length > 0) {
-          form.setValue("genre", bookData.subjects[0].name || "");
-        }
-
-        toast({
-          title: "Libro encontrado",
-          description: "Datos cargados desde Open Library",
-        });
-        return;
+      } catch (error) {
+        console.log("Open Library no disponible");
       }
 
       // Intento 2: Google Books API
-      const googleBooksResponse = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
-      );
-      const googleBooksData = await googleBooksResponse.json();
+      try {
+        const googleBooksResponse = await fetch(
+          `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+        );
+        const googleBooksData = await googleBooksResponse.json();
 
-      if (googleBooksData.totalItems > 0) {
-        const volumeInfo = googleBooksData.items[0].volumeInfo;
-        
-        form.setValue("title", volumeInfo.title || "");
-        if (volumeInfo.authors && volumeInfo.authors.length > 0) {
-          form.setValue("author", volumeInfo.authors.join(", "));
+        if (googleBooksData.totalItems > 0) {
+          const volumeInfo = googleBooksData.items[0].volumeInfo;
+          combinedData.sources.push("Google Books");
+          
+          if (!combinedData.title && volumeInfo.title) {
+            combinedData.title = volumeInfo.title;
+          }
+          if (!combinedData.author && volumeInfo.authors && volumeInfo.authors.length > 0) {
+            combinedData.author = volumeInfo.authors.join(", ");
+          }
+          if (!combinedData.pages && volumeInfo.pageCount) {
+            combinedData.pages = volumeInfo.pageCount;
+          }
+          if (!combinedData.coverUrl && volumeInfo.imageLinks?.thumbnail) {
+            combinedData.coverUrl = volumeInfo.imageLinks.thumbnail.replace("http:", "https:");
+          }
+          if (!combinedData.genre && volumeInfo.categories && volumeInfo.categories.length > 0) {
+            combinedData.genre = volumeInfo.categories[0];
+          }
         }
-        if (volumeInfo.pageCount) {
-          form.setValue("pages", volumeInfo.pageCount);
-        }
-        if (volumeInfo.imageLinks?.thumbnail) {
-          form.setValue("coverUrl", volumeInfo.imageLinks.thumbnail.replace("http:", "https:"));
-        }
-        if (volumeInfo.categories && volumeInfo.categories.length > 0) {
-          form.setValue("genre", volumeInfo.categories[0]);
-        }
+      } catch (error) {
+        console.log("Google Books no disponible");
+      }
 
+      // Intento 3: Firecrawl (Amazon scraping)
+      try {
+        const firecrawlResponse = await fetch(`/api/books/search-isbn/${isbn}`);
+        const firecrawlData = await firecrawlResponse.json();
+
+        if (firecrawlResponse.ok && firecrawlData.title) {
+          combinedData.sources.push("Amazon (Firecrawl)");
+          
+          if (!combinedData.title) combinedData.title = firecrawlData.title;
+          if (!combinedData.author && firecrawlData.author) {
+            combinedData.author = firecrawlData.author;
+          }
+          if (!combinedData.pages && firecrawlData.pages) {
+            combinedData.pages = firecrawlData.pages;
+          }
+          if (!combinedData.coverUrl && firecrawlData.coverUrl) {
+            combinedData.coverUrl = firecrawlData.coverUrl;
+          }
+          if (!combinedData.genre && firecrawlData.genre) {
+            combinedData.genre = firecrawlData.genre;
+          }
+        }
+      } catch (error) {
+        console.log("Firecrawl no disponible");
+      }
+
+      // Verificar si encontramos algo
+      if (combinedData.sources.length === 0) {
         toast({
-          title: "Libro encontrado",
-          description: "Datos cargados desde Google Books",
+          title: "No encontrado",
+          description: "No se encontró información para este ISBN en ninguna fuente. Puedes completar los datos manualmente.",
+          variant: "destructive",
         });
         return;
       }
 
-      // Intento 3: Firecrawl (Amazon scraping)
-      const firecrawlResponse = await fetch(`/api/books/search-isbn/${isbn}`);
-      const firecrawlData = await firecrawlResponse.json();
+      // Cargar los datos combinados en el formulario
+      if (combinedData.title) form.setValue("title", combinedData.title);
+      if (combinedData.author) form.setValue("author", combinedData.author);
+      if (combinedData.pages) form.setValue("pages", combinedData.pages);
+      if (combinedData.coverUrl) form.setValue("coverUrl", combinedData.coverUrl);
+      if (combinedData.genre) form.setValue("genre", combinedData.genre);
 
-      if (firecrawlResponse.ok && firecrawlData.title) {
-        const hasCover = firecrawlData.coverUrl && firecrawlData.coverUrl.trim() !== "";
-        
-        form.setValue("title", firecrawlData.title || "");
-        if (firecrawlData.author) {
-          form.setValue("author", firecrawlData.author);
-        }
-        if (firecrawlData.pages) {
-          form.setValue("pages", firecrawlData.pages);
-        }
-        if (hasCover) {
-          form.setValue("coverUrl", firecrawlData.coverUrl);
-        }
-        if (firecrawlData.genre) {
-          form.setValue("genre", firecrawlData.genre);
-        }
-
-        // Mensaje diferenciado si no se pudo extraer la portada
-        if (hasCover) {
-          toast({
-            title: "Libro encontrado",
-            description: "Datos cargados desde Amazon (Firecrawl)",
-          });
-        } else {
-          toast({
-            title: "Libro encontrado (portada faltante)",
-            description: "Se cargaron los datos desde Amazon. Para agregar la portada: busca el libro en Amazon, haz clic derecho en la imagen de portada → 'Copiar dirección de imagen' → pégala en el campo 'URL de Portada'",
-            duration: 8000, // Más tiempo para leer las instrucciones
-          });
-        }
-        return;
+      // Mensaje de éxito con fuentes utilizadas
+      const hasCover = combinedData.coverUrl && combinedData.coverUrl.trim() !== "";
+      const sourcesText = combinedData.sources.join(", ");
+      
+      if (hasCover) {
+        toast({
+          title: "Libro encontrado",
+          description: `Datos combinados de: ${sourcesText}`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "Libro encontrado (portada faltante)",
+          description: `Datos de: ${sourcesText}. Para la portada: busca el libro en Amazon, clic derecho en la imagen → 'Copiar dirección de imagen' → pégala en 'URL de Portada'`,
+          duration: 8000,
+        });
       }
-
-      // No se encontró en ninguna API
-      toast({
-        title: "No encontrado",
-        description: "No se encontró información para este ISBN en ninguna fuente. Puedes completar los datos manualmente.",
-        variant: "destructive",
-      });
     } catch (error) {
       toast({
         title: "Error",
