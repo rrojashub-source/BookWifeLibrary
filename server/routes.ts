@@ -48,6 +48,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/books", async (req, res) => {
     try {
       const validatedData = insertBookSchema.parse(req.body);
+      
+      // Check for duplicate ISBN if provided
+      if (validatedData.isbn) {
+        const existingBook = await storage.getBookByISBN(validatedData.isbn);
+        if (existingBook) {
+          return res.status(409).json({ 
+            error: "Ya existe un libro con este ISBN",
+            details: `El libro "${existingBook.title}" ya está en tu ${existingBook.isWishlist ? 'lista de deseos' : 'biblioteca'}`,
+            existingBook: existingBook
+          });
+        }
+      }
+      
       const book = await storage.createBook(validatedData);
       res.status(201).json(book);
     } catch (error: any) {

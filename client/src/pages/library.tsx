@@ -50,12 +50,23 @@ export default function Library() {
         description: "El libro se ha agregado a tu colección",
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "No se pudo agregar el libro",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      // Handle duplicate ISBN error specially
+      if (error?.message?.includes("Ya existe un libro con este ISBN")) {
+        const details = error.message.split('\n').find((line: string) => line.includes("El libro"))?.trim();
+        toast({
+          title: "Libro duplicado",
+          description: details || "Ya existe un libro con este ISBN en tu colección",
+          variant: "destructive",
+          duration: 6000,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo agregar el libro",
+          variant: "destructive",
+        });
+      }
     },
   });
 

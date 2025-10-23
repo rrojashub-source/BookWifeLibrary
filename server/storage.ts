@@ -25,6 +25,7 @@ export interface IStorage {
   getLibraryBooks(): Promise<Book[]>; // Only books in library (isWishlist = 0)
   getWishlistBooks(): Promise<Book[]>; // Only books in wishlist (isWishlist = 1)
   getBook(id: string): Promise<Book | undefined>;
+  getBookByISBN(isbn: string): Promise<Book | undefined>; // Check if book with ISBN already exists
   createBook(book: InsertBook): Promise<Book>;
   updateBook(id: string, book: InsertBook): Promise<Book | undefined>;
   deleteBook(id: string): Promise<boolean>;
@@ -105,6 +106,12 @@ export class DatabaseStorage implements IStorage {
 
   async getBook(id: string): Promise<Book | undefined> {
     const [book] = await db.select().from(books).where(eq(books.id, id));
+    return book || undefined;
+  }
+
+  async getBookByISBN(isbn: string): Promise<Book | undefined> {
+    if (!isbn) return undefined;
+    const [book] = await db.select().from(books).where(eq(books.isbn, isbn));
     return book || undefined;
   }
 
