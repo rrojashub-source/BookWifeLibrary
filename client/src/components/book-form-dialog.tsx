@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertBookSchema, type InsertBook, type Book } from "@shared/schema";
@@ -28,8 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Clock, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { normalizeISBN, validateISBN, getISBNVariants, formatISBN } from "@/lib/utils/isbn";
+import { validateImageUrl, getBestQualityImageUrl } from "@/lib/utils/image-validator";
+import { Progress } from "@/components/ui/progress";
 
 interface BookFormDialogProps {
   open: boolean;

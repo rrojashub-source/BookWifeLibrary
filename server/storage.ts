@@ -4,10 +4,12 @@ import {
   users, type User, type InsertUser,
   dictionaryEntries, type DictionaryEntry, type InsertDictionaryEntry,
   readingGoals, type ReadingGoal, type InsertReadingGoal,
-  customAuthors, type CustomAuthor, type InsertCustomAuthor
+  customAuthors, type CustomAuthor, type InsertCustomAuthor,
+  isbnCache, type ISBNCache,
+  searchHistory, type SearchHistory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -53,6 +55,15 @@ export interface IStorage {
   createCustomAuthor(author: InsertCustomAuthor): Promise<CustomAuthor>;
   updateCustomAuthor(id: string, author: InsertCustomAuthor): Promise<CustomAuthor | undefined>;
   deleteCustomAuthor(id: string): Promise<boolean>;
+  
+  // ISBN Cache operations
+  getISBNCache(isbn: string): Promise<ISBNCache | undefined>;
+  setISBNCache(data: ISBNCache): Promise<ISBNCache>;
+  
+  // Search History operations
+  getSearchHistory(userId: number, limit?: number): Promise<SearchHistory[]>;
+  addSearchHistory(userId: number, isbn: string, title?: string): Promise<SearchHistory>;
+  clearSearchHistory(userId: number): Promise<boolean>;
   
   // Statistics
   getMonthlyStats(year: number): Promise<any[]>;
@@ -323,6 +334,52 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCustomAuthor(id: string): Promise<boolean> {
     const result = await db.delete(customAuthors).where(eq(customAuthors.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  // ISBN Cache methods
+  async getISBNCache(isbn: string): Promise<ISBNCache | undefined> {
+    const [cached] = await db
+      .select()
+      .from(isbnCache)
+      .where(eq(isbnCache.isbn, isbn));
+    return cached || undefined;
+  }
+
+  async setISBNCache(data: ISBNCache): Promise<ISBNCache> {
+    const [cached] = await db
+      .insert(isbnCache)
+      .values(data)
+      .onConflictDoUpdate({
+        target: isbnCache.isbn,
+        set: data,
+      })
+      .returning();
+    return cached;
+  }
+
+  // Search History methods
+  async getSearchHistory(userId: number, limit: number = 10): Promise<SearchHistory[]> {
+    return await db
+      .select()
+      .from(searchHistory)
+      .where(eq(searchHistory.userId, userId))
+      .orderBy(desc(searchHistory.searchedAt))
+      .limit(limit);
+  }
+
+  async addSearchHistory(userId: number, isbn: string, title?: string): Promise<SearchHistory> {
+    const [history] = await db
+      .insert(searchHistory)
+      .values({ userId, isbn, title })
+      .returning();
+    return history;
+  }
+
+  async clearSearchHistory(userId: number): Promise<boolean> {
+    const result = await db
+      .delete(searchHistory)
+      .where(eq(searchHistory.userId, userId));
     return result.rowCount !== null && result.rowCount > 0;
   }
 }

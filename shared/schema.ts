@@ -38,6 +38,15 @@ export const books = pgTable("books", {
   finishDate: date("finish_date"),
   dateAdded: timestamp("date_added").notNull().defaultNow(),
   isWishlist: integer("is_wishlist").notNull().default(0), // 0 = in library, 1 = wishlist
+  
+  // New enrichment fields
+  language: text("language"), // Idioma del libro (es, en, la, etc.)
+  edition: text("edition"), // Tipo de edición (Tapa dura, Tapa blanda, eBook, etc.)
+  synopsis: text("synopsis"), // Sinopsis/descripción larga del libro
+  series: text("series"), // Nombre de la serie (si es parte de una)
+  seriesNumber: integer("series_number"), // Número en la serie
+  publisher: text("publisher"), // Editorial
+  publishedDate: text("published_date"), // Fecha de publicación (YYYY o YYYY-MM-DD)
 });
 
 export const insertBookSchema = createInsertSchema(books, {
@@ -53,6 +62,14 @@ export const insertBookSchema = createInsertSchema(books, {
   startDate: z.string().optional(),
   finishDate: z.string().optional(),
   isWishlist: z.number().int().min(0).max(1).optional(),
+  // New enrichment fields validation
+  language: z.string().optional(),
+  edition: z.string().optional(),
+  synopsis: z.string().optional(),
+  series: z.string().optional(),
+  seriesNumber: z.number().int().positive().optional(),
+  publisher: z.string().optional(),
+  publishedDate: z.string().optional(),
 }).omit({
   id: true,
   dateAdded: true,
@@ -133,6 +150,38 @@ export const insertCustomAuthorSchema = createInsertSchema(customAuthors, {
 
 export type InsertCustomAuthor = z.infer<typeof insertCustomAuthorSchema>;
 export type CustomAuthor = typeof customAuthors.$inferSelect;
+
+// ISBN Search Cache table - stores successful ISBN lookups
+export const isbnCache = pgTable("isbn_cache", {
+  isbn: text("isbn").primaryKey(), // Normalized ISBN
+  title: text("title").notNull(),
+  author: text("author"),
+  pages: integer("pages"),
+  coverUrl: text("cover_url"),
+  genre: text("genre"),
+  language: text("language"),
+  edition: text("edition"),
+  synopsis: text("synopsis"),
+  series: text("series"),
+  seriesNumber: integer("series_number"),
+  publisher: text("publisher"),
+  publishedDate: text("published_date"),
+  sources: text("sources").notNull(), // Comma-separated list of sources (e.g., "Open Library,Google Books")
+  cachedAt: timestamp("cached_at").notNull().defaultNow(),
+});
+
+export type ISBNCache = typeof isbnCache.$inferSelect;
+
+// Search History table - tracks recent ISBN searches by user
+export const searchHistory = pgTable("search_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  isbn: text("isbn").notNull(),
+  title: text("title"), // Store title for display
+  searchedAt: timestamp("searched_at").notNull().defaultNow(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+});
+
+export type SearchHistory = typeof searchHistory.$inferSelect;
 
 // Statistics types for frontend
 export interface MonthlyStats {
