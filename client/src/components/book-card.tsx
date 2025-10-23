@@ -17,7 +17,7 @@ const statusConfig = {
 };
 
 export function BookCard({ book, onClick }: BookCardProps) {
-  const statusInfo = statusConfig[book.status as keyof typeof statusConfig];
+  const statusInfo = statusConfig[book.status as keyof typeof statusConfig] ?? statusConfig.por_leer;
 
   return (
     <Card
