@@ -1,22 +1,17 @@
 /**
- * Configuración PM2 para Biblioteca Moi
+ * Configuración PM2 para Biblioteca Moi (Producción)
  * 
- * Este archivo resuelve el problema de ES modules con PM2
- * PM2 no maneja bien los ES modules por defecto, así que usamos
- * una configuración específica para que funcione.
+ * IMPORTANTE: Las credenciales de base de datos están en el archivo .env
+ * No se incluyen aquí por seguridad
  */
 
 module.exports = {
   apps: [{
     name: 'biblioteca-moi',
-    script: 'server/index.ts',
-    
-    // Usar tsx para ejecutar TypeScript directamente
-    // tsx maneja ES modules correctamente
-    interpreter: 'node',
-    interpreter_args: '--import tsx',
+    script: 'dist/index.js',  // Usar código compilado en producción
     
     // Variables de entorno
+    // NOTA: Las credenciales reales están en .env (no se sube a GitHub)
     env_production: {
       NODE_ENV: 'production',
       PORT: 5000
