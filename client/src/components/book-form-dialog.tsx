@@ -160,6 +160,8 @@ export function BookFormDialog({
       const firecrawlData = await firecrawlResponse.json();
 
       if (firecrawlResponse.ok && firecrawlData.title) {
+        const hasCover = firecrawlData.coverUrl && firecrawlData.coverUrl.trim() !== "";
+        
         form.setValue("title", firecrawlData.title || "");
         if (firecrawlData.author) {
           form.setValue("author", firecrawlData.author);
@@ -167,17 +169,26 @@ export function BookFormDialog({
         if (firecrawlData.pages) {
           form.setValue("pages", firecrawlData.pages);
         }
-        if (firecrawlData.coverUrl) {
+        if (hasCover) {
           form.setValue("coverUrl", firecrawlData.coverUrl);
         }
         if (firecrawlData.genre) {
           form.setValue("genre", firecrawlData.genre);
         }
 
-        toast({
-          title: "Libro encontrado",
-          description: "Datos cargados desde Amazon (Firecrawl)",
-        });
+        // Mensaje diferenciado si no se pudo extraer la portada
+        if (hasCover) {
+          toast({
+            title: "Libro encontrado",
+            description: "Datos cargados desde Amazon (Firecrawl)",
+          });
+        } else {
+          toast({
+            title: "Libro encontrado (portada faltante)",
+            description: "Se cargaron los datos desde Amazon. Para agregar la portada: busca el libro en Amazon, haz clic derecho en la imagen de portada → 'Copiar dirección de imagen' → pégala en el campo 'URL de Portada'",
+            duration: 8000, // Más tiempo para leer las instrucciones
+          });
+        }
         return;
       }
 
