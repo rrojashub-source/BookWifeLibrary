@@ -408,6 +408,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search ISBN using Firecrawl (Amazon scraping)
+  // Requires authentication to prevent API key abuse
+  app.get("/api/books/search-isbn/:isbn", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    try {
+      const isbn = req.params.isbn;
+      const apiKey = process.env.FIRECRAWL_API_KEY;
+
+      if (!apiKey) {
+        console.error("Firecrawl API key not configured");
+        return res.status(500).json({ error: "Book search service not available" });
+      }
+
+      // Build Amazon URL for ISBN
+      const amazonUrl = `https://www.amazon.com/dp/${isbn}`;
+
+      // Call Firecrawl API to scrape Amazon
+      const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url: amazonUrl,
+          formats: ["extract"],
+          extract: {
+            schema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                author: { type: "string" },
+                pages: { type: "number" },
+                coverUrl: { type: "string" },
+                genre: { type: "string" },
+              },
+              required: ["title"],
+            },
+            systemPrompt: "You are a book data extraction assistant. Extract ONLY the requested fields from the Amazon book page. Return valid JSON matching the schema.",
+            prompt: "Extract the book information: title (string), author name(s) as single string (string), number of pages (number), book cover image URL (string), and primary genre/category (string). If a field is not available, omit it from the response.",
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Firecrawl API error:", response.status, response.statusText, errorText);
+        return res.status(404).json({ error: "Book not found on Amazon" });
+      }
+
+      const data = await response.json();
+
+      // Firecrawl v1 returns data in extract array
+      if (data.success && data.data?.extract && Array.isArray(data.data.extract)) {
+        const extractedData = data.data.extract[0];
+        
+        // Handle both direct object and stringified JSON
+        let bookInfo;
+        if (typeof extractedData === 'string') {
+          try {
+            bookInfo = JSON.parse(extractedData);
+          } catch {
+            console.error("Failed to parse Firecrawl extract response");
+            return res.status(500).json({ error: "Failed to parse book information" });
+          }
+        } else if (extractedData?.content) {
+          // Content might be stringified JSON
+          try {
+            bookInfo = typeof extractedData.content === 'string' 
+              ? JSON.parse(extractedData.content) 
+              : extractedData.content;
+          } catch {
+            bookInfo = extractedData.content;
+          }
+        } else {
+          bookInfo = extractedData;
+        }
+
+        // Validate that we have at least a title
+        if (!bookInfo || !bookInfo.title) {
+          console.error("No title found in Firecrawl response:", bookInfo);
+          return res.status(404).json({ error: "Could not extract book title" });
+        }
+
+        res.json({
+          title: bookInfo.title || "",
+          author: bookInfo.author || "",
+          pages: bookInfo.pages ? parseInt(String(bookInfo.pages)) : undefined,
+          coverUrl: bookInfo.coverUrl || "",
+          genre: bookInfo.genre || "",
+        });
+      } else {
+        console.error("Unexpected Firecrawl response structure:", JSON.stringify(data, null, 2));
+        res.status(500).json({ error: "Could not extract book information" });
+      }
+    } catch (error: any) {
+      console.error("Error searching ISBN with Firecrawl:", error.message || error);
+      res.status(500).json({ error: "Failed to search ISBN" });
+    }
+  });
+
   // Get recommendations based on reading habits
   app.get("/api/recommendations", async (req, res) => {
     try {

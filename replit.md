@@ -17,7 +17,7 @@ The application employs a modern full-stack architecture.
 - **Dark/Light Mode**: Full support for both themes.
 
 ### Technical Implementations
-- **Book Management**: Features a comprehensive catalog with card views, manual ISBN entry with automatic data fetching via Open Library API and Google Books API (fallback), custom cover URLs, three reading states (To Read, Reading, Finished), 1-5 star rating system, and personal reviews.
+- **Book Management**: Features a comprehensive catalog with card views, manual ISBN entry with automatic data fetching via triple-API system (Open Library → Google Books → Firecrawl/Amazon), custom cover URLs, three reading states (To Read, Reading, Finished), 1-5 star rating system, and personal reviews. Firecrawl integration added October 2025 to handle regional ISBNs (978-607 Mexican editions) and self-published books (979-8 prefix) not indexed in traditional APIs.
 - **Statistics Dashboard**: Displays books and pages read monthly/annually, interactive charts (bar and line), monthly comparisons, real-time current month stats, and an annual goal progress card.
 - **Filters and Search**: Search by title/author, filter by reading status and genre.
 - **Personal Dictionary**: Manual entry for words, custom Spanish definitions, optional book association, and personal notes.
@@ -42,8 +42,9 @@ The application employs a modern full-stack architecture.
 Comprehensive RESTful API for authentication, book management, wishlist operations, statistics, dictionary, reading goals, and custom authors.
 
 ## External Dependencies
-- **Open Library API**: Primary source for automatic book data retrieval via ISBN.
-- **Google Books API**: Fallback source for ISBN lookup when Open Library doesn't have the book (especially for self-published books).
+- **Open Library API**: Primary source for automatic book data retrieval via ISBN (attempt #1).
+- **Google Books API**: Fallback source for ISBN lookup when Open Library doesn't have the book (attempt #2).
+- **Firecrawl API**: Third fallback using ethical web scraping to extract book data from Amazon when both previous APIs fail. Particularly useful for regional editions (978-607 Mexican ISBNs) and self-published books (979-8 prefix) not indexed in traditional book databases (attempt #3).
 - **PostgreSQL (Neon)**: The primary database for data persistence.
 - **Express.js**: Backend framework.
 - **React**: Frontend library.

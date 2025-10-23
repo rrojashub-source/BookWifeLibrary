@@ -147,10 +147,36 @@ export function BookFormDialog({
         return;
       }
 
+      // Intento 3: Firecrawl (Amazon scraping)
+      const firecrawlResponse = await fetch(`/api/books/search-isbn/${isbn}`);
+      const firecrawlData = await firecrawlResponse.json();
+
+      if (firecrawlResponse.ok && firecrawlData.title) {
+        form.setValue("title", firecrawlData.title || "");
+        if (firecrawlData.author) {
+          form.setValue("author", firecrawlData.author);
+        }
+        if (firecrawlData.pages) {
+          form.setValue("pages", firecrawlData.pages);
+        }
+        if (firecrawlData.coverUrl) {
+          form.setValue("coverUrl", firecrawlData.coverUrl);
+        }
+        if (firecrawlData.genre) {
+          form.setValue("genre", firecrawlData.genre);
+        }
+
+        toast({
+          title: "Libro encontrado",
+          description: "Datos cargados desde Amazon (Firecrawl)",
+        });
+        return;
+      }
+
       // No se encontró en ninguna API
       toast({
         title: "No encontrado",
-        description: "No se encontró información para este ISBN. Puedes completar los datos manualmente.",
+        description: "No se encontró información para este ISBN en ninguna fuente. Puedes completar los datos manualmente.",
         variant: "destructive",
       });
     } catch (error) {
