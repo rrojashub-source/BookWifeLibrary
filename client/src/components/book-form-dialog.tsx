@@ -88,11 +88,12 @@ export function BookFormDialog({
 
     setIsSearching(true);
     try {
-      const response = await fetch(
+      // Intento 1: Open Library
+      const openLibraryResponse = await fetch(
         `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`
       );
-      const data = await response.json();
-      const bookData = data[`ISBN:${isbn}`];
+      const openLibraryData = await openLibraryResponse.json();
+      const bookData = openLibraryData[`ISBN:${isbn}`];
 
       if (bookData) {
         form.setValue("title", bookData.title || "");
@@ -111,15 +112,47 @@ export function BookFormDialog({
 
         toast({
           title: "Libro encontrado",
-          description: "Los datos del libro se han cargado automáticamente",
+          description: "Datos cargados desde Open Library",
         });
-      } else {
-        toast({
-          title: "No encontrado",
-          description: "No se encontró información para este ISBN",
-          variant: "destructive",
-        });
+        return;
       }
+
+      // Intento 2: Google Books API
+      const googleBooksResponse = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+      );
+      const googleBooksData = await googleBooksResponse.json();
+
+      if (googleBooksData.totalItems > 0) {
+        const volumeInfo = googleBooksData.items[0].volumeInfo;
+        
+        form.setValue("title", volumeInfo.title || "");
+        if (volumeInfo.authors && volumeInfo.authors.length > 0) {
+          form.setValue("author", volumeInfo.authors.join(", "));
+        }
+        if (volumeInfo.pageCount) {
+          form.setValue("pages", volumeInfo.pageCount);
+        }
+        if (volumeInfo.imageLinks?.thumbnail) {
+          form.setValue("coverUrl", volumeInfo.imageLinks.thumbnail.replace("http:", "https:"));
+        }
+        if (volumeInfo.categories && volumeInfo.categories.length > 0) {
+          form.setValue("genre", volumeInfo.categories[0]);
+        }
+
+        toast({
+          title: "Libro encontrado",
+          description: "Datos cargados desde Google Books",
+        });
+        return;
+      }
+
+      // No se encontró en ninguna API
+      toast({
+        title: "No encontrado",
+        description: "No se encontró información para este ISBN. Puedes completar los datos manualmente.",
+        variant: "destructive",
+      });
     } catch (error) {
       toast({
         title: "Error",

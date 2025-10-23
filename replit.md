@@ -17,7 +17,7 @@ The application employs a modern full-stack architecture.
 - **Dark/Light Mode**: Full support for both themes.
 
 ### Technical Implementations
-- **Book Management**: Features a comprehensive catalog with card views, manual ISBN entry with automatic data fetching via Open Library API, custom cover URLs, three reading states (To Read, Reading, Finished), 1-5 star rating system, and personal reviews.
+- **Book Management**: Features a comprehensive catalog with card views, manual ISBN entry with automatic data fetching via Open Library API and Google Books API (fallback), custom cover URLs, three reading states (To Read, Reading, Finished), 1-5 star rating system, and personal reviews.
 - **Statistics Dashboard**: Displays books and pages read monthly/annually, interactive charts (bar and line), monthly comparisons, real-time current month stats, and an annual goal progress card.
 - **Filters and Search**: Search by title/author, filter by reading status and genre.
 - **Personal Dictionary**: Manual entry for words, custom Spanish definitions, optional book association, and personal notes.
@@ -42,7 +42,8 @@ The application employs a modern full-stack architecture.
 Comprehensive RESTful API for authentication, book management, wishlist operations, statistics, dictionary, reading goals, and custom authors.
 
 ## External Dependencies
-- **Open Library API**: Used for automatic book data retrieval via ISBN.
+- **Open Library API**: Primary source for automatic book data retrieval via ISBN.
+- **Google Books API**: Fallback source for ISBN lookup when Open Library doesn't have the book (especially for self-published books).
 - **PostgreSQL (Neon)**: The primary database for data persistence.
 - **Express.js**: Backend framework.
 - **React**: Frontend library.
@@ -92,11 +93,31 @@ Comprehensive RESTful API for authentication, book management, wishlist operatio
 7. **SSL Certificate Configuration**: Let's Encrypt SSL certificates successfully configured on VPS for HTTPS access. The application is now accessible via https://bibliotecamoi.com with automatic HTTP to HTTPS redirection.
 
 **Key Files for Deployment:**
-- `deploy-vps.sh`: Automated VPS deployment script
+- `deploy-vps.sh`: Automated VPS deployment script (initial setup)
+- `update-from-github.sh`: Automated update script from GitHub to VPS (for ongoing updates)
+- `UPDATE-GUIDE.md`: Step-by-step guide for Claude Code to update production from GitHub
 - `ecosystem.config.cjs`: PM2 configuration for ES modules
 - `init-database.sql`: Database user initialization
 - `GUIA-VPS-COMPLETA.md`: Comprehensive educational guide for VPS deployment
 - `DEPLOYMENT.md`: General deployment documentation
+
+### Updating VPS from GitHub
+
+The application can be updated on the VPS automatically when changes are pushed to GitHub:
+
+**Process for Claude Code:**
+1. Connect to VPS: `ssh root@72.60.115.169`
+2. Navigate to app directory: `cd /var/www/biblioteca-moi`
+3. Run update script: `bash update-from-github.sh`
+
+The script automatically:
+- Pulls latest changes from GitHub (main branch)
+- Installs dependencies
+- Builds the application
+- Restarts PM2
+- Verifies the app is running correctly
+
+For detailed instructions, see `UPDATE-GUIDE.md`.
 
 **Authentication Credentials (Production):**
 - Username: `moi`
