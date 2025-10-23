@@ -6,9 +6,11 @@ import { BookFormDialog } from "@/components/book-form-dialog";
 import { BookDetailDialog } from "@/components/book-detail-dialog";
 import { Filters } from "@/components/filters";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, Loader2 } from "lucide-react";
+import { Plus, BookOpen, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+
+const BOOKS_PER_PAGE = 20;
 
 export default function Library() {
   const { toast } = useToast();
@@ -18,6 +20,7 @@ export default function Library() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [genreFilter, setGenreFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: books = [], isLoading, isError, error } = useQuery<Book[]>({
     queryKey: ["/api/books"],
@@ -134,6 +137,24 @@ export default function Library() {
 
   const uniqueGenres = Array.from(new Set(books.map((b) => b.genre).filter(Boolean))) as string[];
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredBooks.length / BOOKS_PER_PAGE);
+  const startIndex = (currentPage - 1) * BOOKS_PER_PAGE;
+  const endIndex = startIndex + BOOKS_PER_PAGE;
+  const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, genreFilter]);
+
+  // Adjust current page if it exceeds total pages (after deletion or filter changes)
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   return (
     <div className="flex-1 overflow-auto">
       <div className="container max-w-7xl mx-auto p-6 space-y-6">
@@ -216,15 +237,85 @@ export default function Library() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBooks.map((book) => (
-              <BookCard
-                key={book.id}
-                book={book}
-                onClick={() => setSelectedBook(book)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {paginatedBooks.map((book) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  onClick={() => setSelectedBook(book)}
+                />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Mostrando {startIndex + 1} - {Math.min(endIndex, filteredBooks.length)} de{" "}
+                  {filteredBooks.length} {filteredBooks.length === 1 ? "libro" : "libros"}
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    data-testid="button-prev-page"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Anterior
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      const showPage =
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1);
+
+                      if (!showPage) {
+                        // Show ellipsis
+                        if (page === currentPage - 2 || page === currentPage + 2) {
+                          return (
+                            <span key={page} className="px-2 text-muted-foreground">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      }
+
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="min-w-9"
+                          data-testid={`button-page-${page}`}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    data-testid="button-next-page"
+                  >
+                    Siguiente
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         <BookFormDialog
