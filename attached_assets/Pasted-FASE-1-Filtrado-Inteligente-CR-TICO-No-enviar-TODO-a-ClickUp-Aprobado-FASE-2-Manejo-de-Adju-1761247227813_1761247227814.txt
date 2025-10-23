@@ -1,0 +1,21 @@
+FASE 1: Filtrado Inteligente (CRÍTICO) =  No enviar TODO a ClickUp. Aprobado
+FASE 2: Manejo de Adjuntos = Recomiendo: Opción A para archivos <5MB, Opción B para archivos grandes. Aprobado
+FASE 3: Sincronización Zoho Tasks ↔ ClickUp =   ❌ NO hagas sincronización bidireccional
+🎯 WORKFLOW RECOMENDADO FINAL = Aprobado con un cambio, Ejemplo real. Carpeta Banco General, llegan todos los correos de las trasacciones de las tarjetas, pero también llegan correos imporantantes, si es imporante avisar y sino dejar como leído. Asi para todas las carpetas.
+
+ Para configurar filtros correctos, necesito saber:
+
+  1. ¿Qué carpetas de Zoho SÍ crear tareas?  Wao, realmente todas, ya que están hay, pero llegan información importante, menos newsletter, ya que puede ser por ejemplo en COLEGIO LA SALLE envie algo de mis hijos, espero haberme explicado
+    - Ejemplo: "Clientes", "Facturas", "Urgente"
+    - Ignorar: "Newsletters", "Promociones"
+  2. ¿Remitentes/dominios siempre importantes?, todos los de la carpeta Proveedores y Clientes y cada uno tiene sub carpetas por tipo de cliente, realmente esta muy ordenado
+    - Ejemplo: @clienteimportante.com, proveedor@supplier.com
+  3. ¿Palabras clave en asunto que indican importancia? "factura", "cotización", "pedido", "urgente", "pago", "pendiente", "material", no se si al tu tener acceso a todos mis correos puedas revisar de manera global y definir esas palabras
+    - Ejemplo: "factura", "cotización", "pedido", "urgente", "pago"
+  4. ¿Emails con adjuntos siempre crear tarea? Si mejor
+    - Sí/No (porque algunos adjuntos pueden ser newsletters con PDFs)
+  5. ¿Sincronización Zoho Tasks?
+    - Opción A: TODO en ClickUp (recomendado) SI 
+    - Opción B: Unidireccional ClickUp → Zoho (no recomendado)
+
+Nexus@CLI se que habíamos evaluado dejar AI fuera hasta después pero con tantas variables son en leer correos, y pensando que aun falta integrar la parte de mis envios por telegram de mis pendientes manuales cuando me llaman etc, no sera mejor implementar ya.

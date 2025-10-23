@@ -87,6 +87,14 @@ export function BookFormDialog({
     }
 
     setIsSearching(true);
+    
+    // Limpiar campos antes de buscar para evitar datos mezclados
+    form.setValue("title", "");
+    form.setValue("author", "");
+    form.setValue("pages", undefined);
+    form.setValue("coverUrl", "");
+    form.setValue("genre", "");
+    
     try {
       // Intento 1: Open Library
       const openLibraryResponse = await fetch(

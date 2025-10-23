@@ -441,16 +441,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
             schema: {
               type: "object",
               properties: {
-                title: { type: "string" },
-                author: { type: "string" },
-                pages: { type: "number" },
-                coverUrl: { type: "string" },
-                genre: { type: "string" },
+                title: { 
+                  type: "string",
+                  description: "The book title"
+                },
+                author: { 
+                  type: "string",
+                  description: "The author name(s) as a single string"
+                },
+                pages: { 
+                  type: "number",
+                  description: "Total number of pages in the book"
+                },
+                coverUrl: { 
+                  type: "string",
+                  description: "Direct URL to the book cover image (high resolution preferred). Look for images in <img> tags with class containing 'book-image' or 'product-image' or in the main product gallery."
+                },
+                genre: { 
+                  type: "string",
+                  description: "Primary genre or category of the book (e.g., Fiction, Religion, Self-Help, Biography)"
+                },
               },
               required: ["title"],
             },
-            systemPrompt: "You are a book data extraction assistant. Extract ONLY the requested fields from the Amazon book page. Return valid JSON matching the schema.",
-            prompt: "Extract the book information: title (string), author name(s) as single string (string), number of pages (number), book cover image URL (string), and primary genre/category (string). If a field is not available, omit it from the response.",
+            systemPrompt: "You are a book data extraction assistant specialized in extracting structured data from Amazon product pages. Extract ONLY the requested fields. For cover images, find the highest quality image URL available in the page. Return valid JSON matching the schema exactly.",
+            prompt: "Extract book information from this Amazon page:\n\n1. Title: The complete book title\n2. Author: Author name(s) as a single string (comma-separated if multiple)\n3. Pages: Total page count (look in product details or book description)\n4. Cover Image URL: The direct URL to the book's cover image. Look for the main product image, typically found in <img> tags. Extract the full, high-resolution URL (not thumbnails). Common patterns: images with src containing 'amazon.com/images' or data-old-hires attribute.\n5. Genre: The primary category or genre (look in breadcrumbs, product details, or categories section)\n\nIMPORTANT: For the cover image, extract the actual image URL from the src or data-old-hires attribute of the main product <img> tag. Do not include placeholder text.",
           },
         }),
       });
