@@ -1,23 +1,42 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DashboardStats } from "@shared/schema";
+import { DashboardStats, dashboardStatsSchema } from "@shared/schema";
 import { StatsCard } from "@/components/stats-card";
 import { MonthlyBooksChart, MonthlyPagesChart, YearlyComparisonChart } from "@/components/charts";
 import { GoalProgressCard } from "@/components/goal-progress-card";
-import { BookOpen, BookCheck, Clock, FileText, TrendingUp, Loader2, AlertCircle } from "lucide-react";
+import { ReadingHistory } from "@/components/reading-history";
+import { BookOpen, BookCheck, Clock, FileText, TrendingUp, AlertCircle, RefreshCcw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { DashboardSkeleton } from "@/components/dashboard-skeleton";
+import { EmptyState } from "@/components/empty-state";
+import { queryClient } from "@/lib/queryClient";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Dashboard() {
   const { toast } = useToast();
-  const { data: stats, isLoading, isError, error } = useQuery<DashboardStats>({
-    queryKey: ["/api/stats"],
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  
+  const { data: rawStats, isLoading, isError, error, refetch } = useQuery<DashboardStats>({
+    queryKey: ["/api/stats", selectedYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/stats?year=${selectedYear}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch stats");
+      }
+      return response.json();
+    },
   });
 
-  // Show error toast when query fails
+  // Validate stats with Zod for defensive programming (use safeParse to avoid crashes)
+  const validationResult = rawStats ? dashboardStatsSchema.safeParse(rawStats) : null;
+  const stats = validationResult?.success ? validationResult.data : null;
+
+  // Show error toast only once when query fails
   useEffect(() => {
-    if (isError) {
+    if (isError && error) {
       toast({
         title: "Error al cargar estadísticas",
         description: error instanceof Error ? error.message : "No se pudieron cargar las estadísticas",
@@ -26,12 +45,24 @@ export default function Dashboard() {
     }
   }, [isError, error, toast]);
 
+  // Handle retry
+  const handleRetry = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/stats", selectedYear] });
+    refetch();
+  };
+
+  // Generate list of years for selector
+  const getAvailableYears = () => {
+    const years = [];
+    const startYear = 2020; // Or you could make this dynamic based on first book entry
+    for (let year = currentYear; year >= startYear; year--) {
+      years.push(year);
+    }
+    return years;
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (isError) {
@@ -44,14 +75,15 @@ export default function Dashboard() {
           Error al cargar estadísticas
         </h2>
         <p className="text-muted-foreground mb-6 max-w-md">
-          No se pudieron cargar las estadísticas. Por favor intenta recargar la página.
+          No se pudieron cargar las estadísticas. Por favor intenta nuevamente.
         </p>
         <Button
-          onClick={() => window.location.reload()}
+          onClick={handleRetry}
           variant="outline"
-          data-testid="button-reload-stats"
+          data-testid="button-retry-stats"
         >
-          Recargar Página
+          <RefreshCcw className="h-4 w-4 mr-2" />
+          Reintentar
         </Button>
       </div>
     );
@@ -59,22 +91,53 @@ export default function Dashboard() {
 
   if (!stats) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-muted-foreground">No hay datos disponibles</p>
-      </div>
+      <EmptyState
+        icon={<BookOpen className="h-12 w-12 text-muted-foreground" />}
+        title="Sin datos disponibles"
+        description="No hay estadísticas para mostrar en este momento."
+        actionLabel="Agregar tu primer libro"
+        onAction={() => window.location.href = "/library"}
+        actionTestId="button-add-first-book"
+      />
     );
   }
 
-  const currentYear = new Date().getFullYear();
+  // Calculate deltas for trends
+  const booksDelta = stats.previousMonthStats 
+    ? stats.currentMonthStats.booksRead - stats.previousMonthStats.booksRead 
+    : null;
+  const pagesDelta = stats.previousMonthStats 
+    ? stats.currentMonthStats.pagesRead - stats.previousMonthStats.pagesRead 
+    : null;
+  const yearlyBooksDelta = stats.previousYearStats 
+    ? stats.currentYearStats.booksRead - stats.previousYearStats.booksRead 
+    : null;
 
   return (
     <div className="flex-1 overflow-auto">
       <div className="container max-w-7xl mx-auto p-6 space-y-8">
-        <div>
-          <h1 className="font-serif text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Resumen de tu progreso de lectura en {currentYear}
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-3xl font-bold mb-2">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Resumen de tu progreso de lectura en {selectedYear}
+            </p>
+          </div>
+          <Select
+            value={selectedYear.toString()}
+            onValueChange={(value) => setSelectedYear(parseInt(value))}
+          >
+            <SelectTrigger className="w-[180px]" data-testid="select-year">
+              <SelectValue placeholder="Seleccionar año" />
+            </SelectTrigger>
+            <SelectContent>
+              {getAvailableYears().map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -88,7 +151,8 @@ export default function Dashboard() {
             title="Libros Terminados"
             value={stats.booksFinished}
             icon={BookCheck}
-            description={`En ${currentYear}`}
+            description={`En ${selectedYear}`}
+            trend={yearlyBooksDelta !== null ? yearlyBooksDelta : undefined}
           />
           <StatsCard
             title="Leyendo Ahora"
@@ -100,29 +164,33 @@ export default function Dashboard() {
             title="Páginas Leídas"
             value={stats.totalPagesRead.toLocaleString()}
             icon={FileText}
-            description={`En ${currentYear}`}
+            description={`En ${selectedYear}`}
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatsCard
-            title="Este Mes - Libros"
-            value={stats.currentMonthStats.booksRead}
-            icon={TrendingUp}
-            description={new Date().toLocaleDateString("es", { month: "long", year: "numeric" })}
-          />
-          <StatsCard
-            title="Este Mes - Páginas"
-            value={stats.currentMonthStats.pagesRead.toLocaleString()}
-            icon={TrendingUp}
-            description={new Date().toLocaleDateString("es", { month: "long", year: "numeric" })}
-          />
-        </div>
+        {selectedYear === currentYear && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <StatsCard
+              title="Este Mes - Libros"
+              value={stats.currentMonthStats.booksRead}
+              icon={TrendingUp}
+              description={new Date().toLocaleDateString("es", { month: "long", year: "numeric" })}
+              trend={booksDelta !== null ? booksDelta : undefined}
+            />
+            <StatsCard
+              title="Este Mes - Páginas"
+              value={stats.currentMonthStats.pagesRead.toLocaleString()}
+              icon={TrendingUp}
+              description={new Date().toLocaleDateString("es", { month: "long", year: "numeric" })}
+              trend={pagesDelta !== null ? pagesDelta : undefined}
+            />
+          </div>
+        )}
 
         <GoalProgressCard
           booksFinished={stats.currentYearStats.booksRead}
           totalPagesRead={stats.currentYearStats.pagesRead}
-          year={currentYear}
+          year={selectedYear}
         />
 
         <Tabs defaultValue="books" className="w-full">
@@ -136,26 +204,52 @@ export default function Dashboard() {
             <TabsTrigger value="comparison" data-testid="tab-comparison">
               Comparación
             </TabsTrigger>
+            <TabsTrigger value="history" data-testid="tab-history">
+              Historial
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="books" className="mt-6 space-y-6">
-            <MonthlyBooksChart
-              data={stats.currentYearStats.monthlyBreakdown}
-              title="Libros Leídos por Mes"
-              description={`Progreso mensual en ${currentYear}`}
-            />
+            {stats.currentYearStats.monthlyBreakdown.length > 0 ? (
+              <MonthlyBooksChart
+                data={stats.currentYearStats.monthlyBreakdown}
+                title="Libros Leídos por Mes"
+                description={`Progreso mensual en ${selectedYear}`}
+              />
+            ) : (
+              <EmptyState
+                icon={<BookOpen className="h-8 w-8 text-muted-foreground" />}
+                title="Sin datos de libros"
+                description={`No has terminado ningún libro en ${selectedYear}. ¡Comienza a leer!`}
+                actionLabel="Ir a la biblioteca"
+                onAction={() => window.location.href = "/library"}
+                actionTestId="button-goto-library"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="pages" className="mt-6 space-y-6">
-            <MonthlyPagesChart
-              data={stats.currentYearStats.monthlyBreakdown}
-              title="Páginas Leídas por Mes"
-              description={`Tendencia de páginas en ${currentYear}`}
-            />
+            {stats.currentYearStats.monthlyBreakdown.length > 0 ? (
+              <MonthlyPagesChart
+                data={stats.currentYearStats.monthlyBreakdown}
+                title="Páginas Leídas por Mes"
+                description={`Tendencia de páginas en ${selectedYear}`}
+              />
+            ) : (
+              <EmptyState
+                icon={<FileText className="h-8 w-8 text-muted-foreground" />}
+                title="Sin datos de páginas"
+                description={`No hay registro de páginas leídas en ${selectedYear}.`}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="comparison" className="mt-6 space-y-6">
             <YearlyComparisonChart data={stats.currentYearStats.monthlyBreakdown} />
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-6 space-y-6">
+            <ReadingHistory year={selectedYear} />
           </TabsContent>
         </Tabs>
 

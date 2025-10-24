@@ -362,30 +362,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get dashboard statistics
+  // Get dashboard statistics with optional year parameter
   app.get("/api/stats", async (req, res) => {
     try {
+      const requestedYear = req.query.year ? parseInt(req.query.year as string) : new Date().getFullYear();
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
-      const yearStart = `${currentYear}-01-01`;
-      const yearEnd = `${currentYear}-12-31`;
+      const yearStart = `${requestedYear}-01-01`;
+      const yearEnd = `${requestedYear}-12-31`;
 
       // Get all books for overall stats
       const allBooks = await storage.getAllBooks();
 
-      // Get yearly stats
-      const yearlyStats = await storage.getYearlyStats(currentYear);
+      // Get yearly stats for requested year
+      const yearlyStats = await storage.getYearlyStats(requestedYear);
 
-      // Calculate current month stats
-      const currentMonthStats = yearlyStats.monthlyBreakdown.find(
-        (m: any) => m.month === currentMonth
-      ) || { month: currentMonth, booksRead: 0, pagesRead: 0 };
+      // Calculate current month stats (only if viewing current year)
+      let currentMonthStats;
+      if (requestedYear === currentYear) {
+        currentMonthStats = yearlyStats.monthlyBreakdown.find(
+          (m: any) => m.month === currentMonth
+        ) || { month: currentMonth, booksRead: 0, pagesRead: 0 };
+      } else {
+        currentMonthStats = { month: `${requestedYear}-12`, booksRead: 0, pagesRead: 0 };
+      }
 
       // Count books by status (overall, not year-specific)
       const booksReading = allBooks.filter((b) => b.status === "leyendo").length;
       const booksToRead = allBooks.filter((b) => b.status === "por_leer").length;
 
-      // Count books finished THIS YEAR (year-specific)
+      // Count books finished in REQUESTED YEAR (year-specific)
       const booksFinished = allBooks.filter((b) => 
         b.status === "terminado" && 
         b.finishDate && 
@@ -393,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         b.finishDate <= yearEnd
       ).length;
 
-      // Calculate total pages read THIS YEAR (year-specific)
+      // Calculate total pages read in REQUESTED YEAR (year-specific)
       const totalPagesRead = allBooks
         .filter((b) => 
           b.status === "terminado" && 
@@ -404,6 +410,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
         .reduce((sum, b) => sum + (b.pages || 0), 0);
 
+      // Get previous year stats for comparison
+      const previousYearStats = await storage.getYearlyStats(requestedYear - 1);
+      
+      // Get previous month stats for comparison
+      const previousMonthDate = new Date(currentYear, new Date().getMonth() - 1, 1);
+      const previousMonth = previousMonthDate.toISOString().substring(0, 7);
+      const previousMonthStats = yearlyStats.monthlyBreakdown.find(
+        (m: any) => m.month === previousMonth
+      ) || { month: previousMonth, booksRead: 0, pagesRead: 0 };
+
       const stats = {
         totalBooks: allBooks.length,
         booksReading,
@@ -412,12 +428,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalPagesRead,
         currentYearStats: yearlyStats,
         currentMonthStats,
+        previousYearStats,
+        previousMonthStats,
       };
 
       res.json(stats);
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ error: "Failed to fetch statistics" });
+    }
+  });
+
+  // Get finished books by year for history view
+  app.get("/api/books/finished/:year", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    try {
+      const year = parseInt(req.params.year);
+      const yearStart = `${year}-01-01`;
+      const yearEnd = `${year}-12-31`;
+
+      const books = await storage.getAllBooks();
+      const finishedBooks = books.filter((b) =>
+        b.status === "terminado" &&
+        b.finishDate &&
+        b.finishDate >= yearStart &&
+        b.finishDate <= yearEnd
+      );
+
+      // Sort by finish date descending (most recent first)
+      finishedBooks.sort((a, b) => {
+        if (!a.finishDate || !b.finishDate) return 0;
+        return b.finishDate.localeCompare(a.finishDate);
+      });
+
+      res.json(finishedBooks);
+    } catch (error) {
+      console.error("Error fetching finished books by year:", error);
+      res.status(500).json({ error: "Failed to fetch books" });
     }
   });
 

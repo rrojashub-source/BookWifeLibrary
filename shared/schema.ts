@@ -183,26 +183,33 @@ export const searchHistory = pgTable("search_history", {
 
 export type SearchHistory = typeof searchHistory.$inferSelect;
 
-// Statistics types for frontend
-export interface MonthlyStats {
-  month: string; // YYYY-MM format
-  booksRead: number;
-  pagesRead: number;
-}
+// Statistics types and schemas for frontend with defensive validation
+export const monthlyStatsSchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  booksRead: z.number().int().nonnegative().default(0),
+  pagesRead: z.number().int().nonnegative().default(0),
+});
 
-export interface YearlyStats {
-  year: number;
-  booksRead: number;
-  pagesRead: number;
-  monthlyBreakdown: MonthlyStats[];
-}
+export const yearlyStatsSchema = z.object({
+  year: z.number().int().min(2000).max(2100),
+  booksRead: z.number().int().nonnegative().default(0),
+  pagesRead: z.number().int().nonnegative().default(0),
+  monthlyBreakdown: z.array(monthlyStatsSchema).default([]),
+});
 
-export interface DashboardStats {
-  totalBooks: number;
-  booksReading: number;
-  booksToRead: number;
-  booksFinished: number;
-  totalPagesRead: number;
-  currentYearStats: YearlyStats;
-  currentMonthStats: MonthlyStats;
-}
+export const dashboardStatsSchema = z.object({
+  totalBooks: z.number().int().nonnegative().default(0),
+  booksReading: z.number().int().nonnegative().default(0),
+  booksToRead: z.number().int().nonnegative().default(0),
+  booksFinished: z.number().int().nonnegative().default(0),
+  totalPagesRead: z.number().int().nonnegative().default(0),
+  currentYearStats: yearlyStatsSchema,
+  currentMonthStats: monthlyStatsSchema,
+  // Optional comparison data for trends
+  previousYearStats: yearlyStatsSchema.optional(),
+  previousMonthStats: monthlyStatsSchema.optional(),
+});
+
+export type MonthlyStats = z.infer<typeof monthlyStatsSchema>;
+export type YearlyStats = z.infer<typeof yearlyStatsSchema>;
+export type DashboardStats = z.infer<typeof dashboardStatsSchema>;

@@ -2,6 +2,49 @@
 
 ## Recent Changes
 
+### October 24, 2025 - Dashboard Robustness & Reading History
+**Major Improvement**: Completely overhauled Dashboard with defensive programming, trend comparisons, and historical analysis:
+
+**Defensive Programming & Reliability:**
+1. **Zod Validation** - All statistics validated with Zod schemas before rendering
+2. **Skeleton Loading States** - Professional loading indicators instead of simple spinners
+3. **Enhanced Error Handling** - "Reintentar" button that refetches data without page reload
+4. **Empty State Components** - Clear messaging and CTAs when no data exists
+5. **Defensive Defaults** - All numeric fields default to 0, prevents undefined crashes
+
+**Trend Analysis & Comparisons:**
+6. **Delta Indicators** - Shows increase/decrease vs previous month/year with colored arrows
+7. **Previous Year Comparison** - Backend now includes previousYearStats for year-over-year analysis
+8. **Previous Month Comparison** - Tracks month-over-month progress with visual indicators
+9. **Conditional Rendering** - "Este Mes" stats only show for current year
+
+**Historical Analysis System:**
+10. **Year Selector** - Dropdown to view statistics from any year (2020-present)
+11. **Reading History Tab** - New "Historial" tab shows all books finished in selected year
+12. **Book Timeline** - Displays books with cover, title, author, finish date, pages, rating, genre
+13. **History Stats** - Shows total books, pages, and average rating for the year
+14. **Endpoint `/api/books/finished/:year`** - Backend API to fetch finished books by year
+
+**Technical Implementation:**
+- Created `dashboardStatsSchema`, `yearlyStatsSchema`, `monthlyStatsSchema` with Zod validation
+- Built `DashboardSkeleton` component with realistic skeleton cards
+- Created `EmptyState` reusable component for no-data scenarios
+- Updated `StatsCard` to display trend deltas with icons (TrendingUp/TrendingDown)
+- Created `ReadingHistory` component showing book timeline with metadata
+- Extended `/api/stats` endpoint to accept `?year=YYYY` parameter
+- Backend pre-calculates previous year/month stats for comparisons
+- All stats properly filtered by isWishlist=0 (library books only)
+
+**User Impact:**
+- Instant visual feedback during loading (no blank screens)
+- Clear error recovery without losing context
+- See reading progress trends (up/down vs last period)
+- Navigate through reading history year by year
+- View complete timeline of finished books with all metadata
+- Better understanding of reading patterns over time
+
+---
+
 ### October 23, 2025 - ISBN Search System Enhancement
 **Major Improvement**: Massively enhanced ISBN search with 12+ improvements:
 
