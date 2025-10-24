@@ -19,6 +19,7 @@ import AuthorsPage from "@/pages/authors-page";
 import RecommendationsPage from "@/pages/recommendations-page";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 function AppContent() {
   const [location] = useLocation();
@@ -74,6 +75,7 @@ export default function App() {
         <ThemeProvider>
           <AuthProvider>
             <AppContent />
+            <PWAInstallPrompt />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
