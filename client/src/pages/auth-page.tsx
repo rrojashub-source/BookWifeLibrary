@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Heart, BarChart3, Star } from "lucide-react";
 import virgenMariaImage from "@assets/estampa-gospa-maría reina de la paz_1761093317820.jpg";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
@@ -44,6 +45,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex">
+      <PWAInstallPrompt />
       {/* Left Side - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">

@@ -14,22 +14,22 @@ export function PWAInstallPrompt() {
       return;
     }
 
-    // Esperar 10 segundos antes de mostrar el prompt
-    const timer = setTimeout(() => {
-      // Para iOS, mostrar instrucciones manuales
-      if (isIOS()) {
-        setShowPrompt(true);
-        return;
+    // Verificar si el usuario ya rechazó el prompt recientemente
+    const dismissed = localStorage.getItem('pwa-prompt-dismissed');
+    if (dismissed) {
+      const dismissedDate = parseInt(dismissed);
+      const daysSinceDismissed = (Date.now() - dismissedDate) / (1000 * 60 * 60 * 24);
+      
+      if (daysSinceDismissed < 7) {
+        return; // No mostrar si fue rechazado hace menos de 7 días
       }
+    }
 
-      // Para Android/Chrome, mostrar si hay prompt disponible
-      if (deferredPrompt) {
-        setShowPrompt(true);
-      }
-    }, 10000); // 10 segundos
-
-    return () => clearTimeout(timer);
-  }, [deferredPrompt]);
+    // Mostrar inmediatamente para todos los navegadores
+    // Para iOS, siempre mostrar instrucciones manuales
+    // Para Android/Chrome, mostrar incluso si beforeinstallprompt no se disparó aún
+    setShowPrompt(true);
+  }, []);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -46,18 +46,23 @@ export function PWAInstallPrompt() {
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
+      console.log('[PWA] beforeinstallprompt aún no disponible');
       return;
     }
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
 
-    if (outcome === 'accepted') {
-      console.log('[PWA] Usuario aceptó instalación');
+      if (outcome === 'accepted') {
+        console.log('[PWA] Usuario aceptó instalación');
+      }
+
+      setDeferredPrompt(null);
+      setShowPrompt(false);
+    } catch (error) {
+      console.error('[PWA] Error al mostrar prompt de instalación:', error);
     }
-
-    setDeferredPrompt(null);
-    setShowPrompt(false);
   };
 
   const handleDismiss = () => {
@@ -66,18 +71,6 @@ export function PWAInstallPrompt() {
     localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
   };
 
-  // Verificar si el usuario ya rechazó el prompt recientemente
-  useEffect(() => {
-    const dismissed = localStorage.getItem('pwa-prompt-dismissed');
-    if (dismissed) {
-      const dismissedDate = parseInt(dismissed);
-      const daysSinceDismissed = (Date.now() - dismissedDate) / (1000 * 60 * 60 * 24);
-      
-      if (daysSinceDismissed < 7) {
-        setShowPrompt(false);
-      }
-    }
-  }, []);
 
   if (!showPrompt) {
     return null;

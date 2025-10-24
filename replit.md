@@ -17,7 +17,7 @@ The application employs a modern full-stack architecture with a focus on robust 
 - **Dark/Light Mode**: Full support for both themes.
 
 ### Technical Implementations
-- **PWA Capabilities**: App installable, custom icon, standalone mode, offline functionality via Service Worker, intelligent installation prompt, iOS compatibility, and quick shortcuts.
+- **PWA Capabilities**: App installable, custom icon, standalone mode, offline functionality via Service Worker, **immediate installation prompt on login page** (no delay), iOS compatibility, and quick shortcuts.
 - **Book Management**: Comprehensive catalog with card views, manual ISBN entry with automatic data fetching from multiple sources, custom cover URLs, three reading states, 1-5 star rating, and personal reviews.
 - **Enhanced ISBN Search**: Automatic normalization and validation, real-time progress indicators, cover quality verification, intelligent cache system, search history tracking, extended metadata enrichment from Open Library, Google Books, and Firecrawl.
 - **Statistics Dashboard**: Displays monthly/annual book/page counts, interactive charts, monthly/annual comparisons (with delta indicators), year selector for historical data, and an annual goal progress card. Robustness is ensured with Zod validation, skeleton loading, enhanced error handling, and empty state components.
